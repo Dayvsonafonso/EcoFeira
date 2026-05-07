@@ -41,7 +41,7 @@ const CATEGORIES = [
   "🌾 Grãos & Cereais",
   "🫙 Enlatados & Conservas",
   "🍝 Massas & Farinhas",
-  "🫒 Óleos & Temperos",
+  "🫒 Óleos, Molhos & Temperos",
   "🧂 Ingredientes Secos",
   "🍞 Padaria",
   "🍪 Biscoitos & Bolachas",
