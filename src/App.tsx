@@ -57,6 +57,10 @@ export default function App() {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    console.log("Aba ativa mudou para:", activeTab);
+  }, [activeTab]);
+
   const formatInputCurrency = (value: string) => {
     // Remove non-digits
     const digits = value.replace(/\D/g, "");
@@ -207,7 +211,11 @@ export default function App() {
         </div>
         <nav className="mt-8 space-y-2 px-4">
           <button 
-            onClick={() => { console.log("Tab: dashboard"); setActiveTab("dashboard"); }}
+            onClick={() => { 
+              window.alert("Clicou Dashboard");
+              console.log("Clicou Dashboard"); 
+              setActiveTab("dashboard"); 
+            }}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all cursor-pointer ${
               activeTab === "dashboard" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
             }`}
@@ -216,7 +224,11 @@ export default function App() {
             Dashboard
           </button>
           <button 
-            onClick={() => { console.log("Tab: history"); setActiveTab("history"); }}
+            onClick={() => { 
+              window.alert("Clicou Histórico");
+              console.log("Clicou Histórico"); 
+              setActiveTab("history"); 
+            }}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all cursor-pointer ${
               activeTab === "history" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
             }`}
@@ -225,7 +237,11 @@ export default function App() {
             Histórico
           </button>
           <button 
-            onClick={() => { console.log("Tab: alerts"); setActiveTab("alerts"); }}
+            onClick={() => { 
+              window.alert("Clicou Alertas");
+              console.log("Clicou Alertas"); 
+              setActiveTab("alerts"); 
+            }}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all cursor-pointer ${
               activeTab === "alerts" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
             }`}
@@ -596,7 +612,7 @@ export default function App() {
 
       <nav className="fixed bottom-0 left-0 flex w-full items-center justify-around border-t border-gray-200 bg-white px-4 py-3 lg:hidden shadow-2xl" style={{ zIndex: 9999 }}>
         <button 
-          onClick={() => setActiveTab("dashboard")}
+          onClick={() => { console.log("Mobile: dashboard"); setActiveTab("dashboard"); }}
           className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
             activeTab === "dashboard" ? "text-blue-600" : "text-gray-400"
           }`}
@@ -605,7 +621,7 @@ export default function App() {
           <span className="text-[10px] font-bold uppercase">Início</span>
         </button>
         <button 
-          onClick={() => setActiveTab("history")}
+          onClick={() => { console.log("Mobile: history"); setActiveTab("history"); }}
           className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
             activeTab === "history" ? "text-blue-600" : "text-gray-400"
           }`}
@@ -614,7 +630,7 @@ export default function App() {
           <span className="text-[10px] font-bold uppercase">Histórico</span>
         </button>
         <button 
-          onClick={() => setActiveTab("alerts")}
+          onClick={() => { console.log("Mobile: alerts"); setActiveTab("alerts"); }}
           className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
             activeTab === "alerts" ? "text-blue-600" : "text-gray-400"
           }`}
