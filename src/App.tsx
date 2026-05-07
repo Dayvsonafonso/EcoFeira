@@ -595,6 +595,40 @@ export default function App() {
         )}
       </main>
 
+      {/* Mobile Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-gray-200 bg-white px-4 py-3 lg:hidden">
+        <button 
+          onClick={() => setActiveTab("dashboard")}
+          className={cn(
+            "flex flex-col items-center gap-1 transition-colors",
+            activeTab === "dashboard" ? "text-[#2563EB]" : "text-gray-400"
+          )}
+        >
+          <LayoutDashboard size={24} />
+          <span className="text-[10px] font-bold uppercase">Início</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab("history")}
+          className={cn(
+            "flex flex-col items-center gap-1 transition-colors",
+            activeTab === "history" ? "text-[#2563EB]" : "text-gray-400"
+          )}
+        >
+          <History size={24} />
+          <span className="text-[10px] font-bold uppercase">Histórico</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab("alerts")}
+          className={cn(
+            "flex flex-col items-center gap-1 transition-colors",
+            activeTab === "alerts" ? "text-[#2563EB]" : "text-gray-400"
+          )}
+        >
+          <AlertTriangle size={24} />
+          <span className="text-[10px] font-bold uppercase">Alertas</span>
+        </button>
+      </nav>
+
       {/* Product Form Modal */}
       <AnimatePresence>
         {showForm && (
