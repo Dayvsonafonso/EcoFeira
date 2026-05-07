@@ -593,7 +593,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Mobile Navigation Bar */}
       <nav className="fixed bottom-0 left-0 flex w-full items-center justify-around border-t border-gray-200 bg-white px-4 py-3 lg:hidden shadow-2xl" style={{ zIndex: 9999 }}>
         <button 
           onClick={() => setActiveTab("dashboard")}
