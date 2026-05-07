@@ -41,6 +41,7 @@ const CATEGORIES = [
   "🫙 Enlatados & Conservas",
   "🍝 Massas & Farinhas",
   "🫒 Óleos & Temperos",
+  "🧂 Temperos & Ingredientes Secos",
   "🍞 Padaria & Biscoitos",
   "🧃 Bebidas",
   "🍬 Doces & Sobremesas",
