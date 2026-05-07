@@ -1,36 +1,29 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { 
   Plus, 
-  Trash2, 
   AlertTriangle, 
-  TrendingUp, 
-  TrendingDown, 
-  Search, 
-  ChevronDown, 
-  ChevronUp,
-  Sparkles,
   ShoppingBag,
   History,
   LayoutDashboard,
-  Filter,
-  Pencil,
   Moon,
   Sun
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { 
   BarChart, 
   Bar, 
   XAxis, 
-  YAxis, 
-  CartesianGrid, 
   Tooltip as RechartsTooltip, 
   ResponsiveContainer,
   Cell 
 } from "recharts";
-import { Product, getSavingInsights, AiInsight } from "./lib/gemini";
-import { cn, formatCurrency, calculateVariation } from "./lib/utils";
+import { Product } from "./lib/gemini";
+import { formatCurrency, calculateVariation } from "./lib/utils";
 import { supabase } from "./lib/supabase";
+
+import { DashboardStats } from "./components/DashboardStats";
+import { AiCard } from "./components/AiCard";
+import { ProductList } from "./components/ProductList";
+import { ProductModal } from "./components/ProductModal";
 
 const CATEGORIES = [
   "🥩 Carnes & Aves",
@@ -74,8 +67,6 @@ export default function App() {
     quantity: "",
     description: ""
   });
-  const [aiInsights, setAiInsights] = useState<AiInsight | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -152,10 +143,7 @@ export default function App() {
     const newName = e.target.value;
     let newPrevPrice = formData.previousPrice;
     
-    // Only auto-fill if we are creating a new item and the user typed a few letters
     if (!editingId && newName.length > 2) {
-      // Find exact match (case-insensitive) in existing products
-      // Note: Since 'products' is ordered by created_at DESC, .find() gets the most recent one!
       const existing = products.find(p => p.name.toLowerCase() === newName.toLowerCase().trim());
       if (existing) {
         newPrevPrice = existing.currentPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -204,37 +192,12 @@ export default function App() {
     if (!error) setProducts(products.filter(p => p.id !== id));
   };
 
-  const analyzeWithAi = async () => {
-    if (products.length === 0) return;
-    setIsLoadingAi(true);
-    try {
-      const insights = await getSavingInsights(products);
-      setAiInsights(insights);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoadingAi(false);
-    }
-  };
-
   const totals = useMemo(() => {
     const current = products.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
     const prev = products.reduce((sum, p) => sum + (p.previousPrice * p.quantity), 0);
     const { diff, percent } = calculateVariation(current, prev);
     return { current, prev, diff, percent };
   }, [products]);
-
-  const filteredProducts = products.filter(p => 
-    filterCategory === "Todas" ? true : p.category === filterCategory
-  );
-
-  const groupedProducts = useMemo(() => {
-    return filteredProducts.reduce((acc, p) => {
-      if (!acc[p.category]) acc[p.category] = [];
-      acc[p.category].push(p);
-      return acc;
-    }, {} as Record<string, Product[]>);
-  }, [filteredProducts]);
 
   const chartData = useMemo(() => {
     return CATEGORIES.map(cat => {
@@ -320,144 +283,24 @@ export default function App() {
               </div>
             </header>
 
-            {/* Stats */}
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Atual</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totals.current)}</p>
-              </div>
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Mês Anterior</p>
-                <p className="text-2xl font-bold text-gray-400 dark:text-gray-500">{formatCurrency(totals.prev)}</p>
-              </div>
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Variação Real</p>
-                <p className={`text-2xl font-bold ${totals.diff > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
-                  {totals.diff > 0 ? "+" : ""}{formatCurrency(totals.diff)}
-                </p>
-              </div>
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Variação %</p>
-                <p className={`text-2xl font-bold ${totals.percent > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
-                  {totals.percent.toFixed(1)}%
-                </p>
-              </div>
-            </div>
+            {/* Dashboard Stats */}
+            <DashboardStats totals={totals} />
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lista de Compras</h2>
-                  <select 
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E293B] text-gray-900 dark:text-white px-3 py-1.5 text-sm outline-none transition-colors"
-                  >
-                    <option value="Todas">Todas</option>
-                    {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-4">
-                  {isLoadingProducts ? (
-                    <div className="py-20 text-center text-gray-500 dark:text-gray-400">Carregando itens...</div>
-                  ) : Object.keys(groupedProducts).length === 0 ? (
-                    <div className="py-20 text-center text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                      Sua lista está vazia
-                    </div>
-                  ) : (
-                    Object.entries(groupedProducts).map(([category, items]) => {
-                      const categoryTotal = items.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
-                      return (
-                        <div key={category} className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] shadow-sm transition-colors">
-                          <div className="bg-gray-50/80 dark:bg-[#0F172A]/80 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between w-full">
-                            <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">{category}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tight">Total do Setor:</span>
-                              <span className="text-sm font-black text-gray-800 dark:text-gray-200">{formatCurrency(categoryTotal)}</span>
-                            </div>
-                          </div>
-                          <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                          {items.map(item => {
-                            const unitPrice = item.currentPrice;
-                            const totalItem = unitPrice * item.quantity;
-                            const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
-                            return (
-                              <div key={item.id} className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">{item.name}</h4>
-                                    <span className="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 dark:text-gray-400">
-                                      x{item.quantity}
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.description || "Sem descrição"}</p>
-                                </div>
-                                <div className="flex items-center gap-3 sm:gap-6">
-                                  <div className="text-right hidden sm:block">
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Unitário</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(unitPrice)}</p>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Subtotal</p>
-                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalItem)}</p>
-                                  </div>
-                                  <div className={`text-right min-w-[60px] ${diff > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
-                                    <p className="text-xs font-bold">{percent.toFixed(1)}%</p>
-                                    <p className="text-[10px] font-medium">{diff > 0 ? "+" : ""}{formatCurrency(diff)}</p>
-                                  </div>
-                                  <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-3 ml-1">
-                                    <button onClick={() => handleEditClick(item)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                                      <Pencil size={18} />
-                                    </button>
-                                    <button onClick={() => removeProduct(item.id)} className="text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                                      <Trash2 size={18} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+              {/* Product List Component */}
+              <ProductList 
+                products={products}
+                categories={CATEGORIES}
+                filterCategory={filterCategory}
+                setFilterCategory={setFilterCategory}
+                isLoadingProducts={isLoadingProducts}
+                handleEditClick={handleEditClick}
+                removeProduct={removeProduct}
+              />
 
               <div className="space-y-6">
-                <div className="rounded-2xl bg-blue-600 dark:bg-blue-700 p-6 text-white shadow-lg transition-colors">
-                  <div className="mb-4 flex items-center justify-between">
-                    <Sparkles size={24} className="text-blue-200" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">AI Power</span>
-                  </div>
-                  <h3 className="mb-2 text-lg font-bold">Análise com IA</h3>
-                  <p className="mb-6 text-sm text-blue-100 leading-relaxed">
-                    Descubra como economizar analisando as variações da sua feira.
-                  </p>
-                  <button 
-                    onClick={analyzeWithAi}
-                    disabled={isLoadingAi || products.length === 0}
-                    className="w-full rounded-xl bg-white dark:bg-[#0F172A] py-3 font-bold text-blue-600 dark:text-blue-400 hover:scale-[1.02] transition-transform disabled:opacity-50"
-                  >
-                    {isLoadingAi ? "Analisando..." : "Gerar Insights"}
-                  </button>
-
-                  {aiInsights && (
-                    <div className="mt-6 space-y-4 pt-6 border-t border-white/10 animate-in fade-in slide-in-from-top-4">
-                      {aiInsights.topIncreases.map((inc, i) => (
-                        <div key={i} className="bg-white/10 p-3 rounded-lg border border-white/5">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-bold text-sm">{inc.name}</span>
-                            <span className="text-red-300 text-xs font-black">+{inc.percent}%</span>
-                          </div>
-                          <p className="text-[11px] text-blue-100 italic">"{inc.suggestion}"</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* AI Card Component */}
+                <AiCard products={products} />
 
                 {chartData.length > 0 && (
                   <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
@@ -585,66 +428,18 @@ export default function App() {
         </button>
       </nav>
 
-      {/* Form Modal */}
-      <AnimatePresence>
-        {showForm && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => setShowForm(false)} 
-              className="absolute inset-0" 
-            />
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              exit={{ scale: 0.95, opacity: 0 }} 
-              className="relative w-full max-w-lg bg-white dark:bg-[#1E293B] p-6 sm:p-8 rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto transition-colors duration-200"
-            >
-              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{editingId ? "Editar Item" : "Novo Item"}</h2>
-              <form onSubmit={handleAddProduct} className="space-y-4">
-                <div>
-                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Nome</label>
-                  <input required value={formData.name} onChange={handleNameChange} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Preço Unitário Atual</label>
-                    <input required value={formData.currentPrice} onChange={e => setFormData({ ...formData, currentPrice: formatInputCurrency(e.target.value) })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Preço Unitário Anterior</label>
-                    <input value={formData.previousPrice} onChange={e => setFormData({ ...formData, previousPrice: formatInputCurrency(e.target.value) })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Quantidade</label>
-                    <input type="number" min="1" step="any" required value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Categoria</label>
-                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Observações (opcional)</label>
-                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none transition-colors" placeholder="Ex: Estava mais caro no varejão" />
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3 font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors">Cancelar</button>
-                  <button type="submit" className="flex-1 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-100/20 dark:shadow-blue-900/20 transition-colors">
-                    {editingId ? "Salvar Alterações" : "Salvar Item"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Product Modal Component */}
+      <ProductModal 
+        showForm={showForm}
+        setShowForm={setShowForm}
+        editingId={editingId}
+        formData={formData}
+        setFormData={setFormData}
+        handleAddProduct={handleAddProduct}
+        handleNameChange={handleNameChange}
+        categories={CATEGORIES}
+        formatInputCurrency={formatInputCurrency}
+      />
     </div>
   );
 }
