@@ -148,6 +148,23 @@ export default function App() {
     setShowForm(true);
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    let newPrevPrice = formData.previousPrice;
+    
+    // Only auto-fill if we are creating a new item and the user typed a few letters
+    if (!editingId && newName.length > 2) {
+      // Find exact match (case-insensitive) in existing products
+      // Note: Since 'products' is ordered by created_at DESC, .find() gets the most recent one!
+      const existing = products.find(p => p.name.toLowerCase() === newName.toLowerCase().trim());
+      if (existing) {
+        newPrevPrice = existing.currentPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      }
+    }
+
+    setFormData({ ...formData, name: newName, previousPrice: newPrevPrice });
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.currentPrice) return;
@@ -589,7 +606,7 @@ export default function App() {
               <form onSubmit={handleAddProduct} className="space-y-4">
                 <div>
                   <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Nome</label>
-                  <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
+                  <input required value={formData.name} onChange={handleNameChange} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
