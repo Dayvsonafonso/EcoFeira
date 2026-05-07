@@ -195,7 +195,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
       {/* Sidebar - Visual Mock for Desktop */}
-      <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 bg-white lg:block">
+      <aside className="fixed left-0 top-0 z-50 hidden h-full w-64 border-r border-gray-200 bg-white lg:block">
         <div className="flex h-20 items-center border-b border-gray-200 px-6">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-white">
@@ -208,7 +208,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab("dashboard")}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors",
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer",
               activeTab === "dashboard" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
             )}
           >
@@ -218,7 +218,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab("history")}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors",
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer",
               activeTab === "history" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
             )}
           >
@@ -228,7 +228,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab("alerts")}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors",
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer",
               activeTab === "alerts" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
             )}
           >
