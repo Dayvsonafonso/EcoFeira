@@ -1,6 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || "").trim().replace(/\/$/, "");
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || "")
+  .trim()
+  .replace(/\/rest\/v1\/?$/, "") // Remove /rest/v1 if present
+  .replace(/\/$/, ""); // Remove trailing slash if present
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
