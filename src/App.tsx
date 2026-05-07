@@ -30,14 +30,33 @@ import { cn, formatCurrency, calculateVariation } from "./lib/utils";
 import { supabase } from "./lib/supabase";
 
 const CATEGORIES = [
-  "Frutas", "Legumes", "Verduras", "Açougue", "Padaria", "Laticínios", "Limpeza", "Outros"
+  "🥩 Carnes & Aves",
+  "🐟 Peixes & Frutos do Mar",
+  "🥚 Ovos & Frios",
+  "🥛 Laticínios",
+  "🍎 Frutas",
+  "🥦 Verduras & Folhas",
+  "🥕 Legumes & Raízes",
+  "🌾 Grãos & Cereais",
+  "🫙 Enlatados & Conservas",
+  "🍝 Massas & Farinhas",
+  "🫒 Óleos & Temperos",
+  "🍞 Padaria & Biscoitos",
+  "🧃 Bebidas",
+  "🍬 Doces & Sobremesas",
+  "🧴 Higiene Pessoal",
+  "🧹 Limpeza",
+  "👶 Bebê & Infantil",
+  "🐾 Pet",
+  "💊 Farmácia & Saúde",
+  "📦 Outros"
 ];
 
 export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState({
     name: "",
-    category: "Frutas",
+    category: "🍎 Frutas",
     currentPrice: "",
     previousPrice: "",
     quantity: "1",
@@ -113,7 +132,7 @@ export default function App() {
       .select();
     if (!error && data) {
       fetchProducts();
-      setFormData({ name: "", category: "Frutas", currentPrice: "", previousPrice: "", quantity: "1", description: "" });
+      setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "1", description: "" });
       setShowForm(false);
     } else {
       console.error("Supabase error:", error);
