@@ -239,8 +239,8 @@ export default function App() {
     <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#0F172A] text-[#111827] dark:text-gray-100 font-sans pb-24 lg:pb-0 transition-colors duration-200">
       {/* Sidebar - Desktop */}
       <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] lg:flex flex-col shadow-sm z-50 transition-colors duration-200">
-        <div className="flex h-20 items-center justify-center border-b border-gray-200 dark:border-gray-800 px-6 py-2">
-          <img src="/logo.png" alt="FeiraCerta Logo" className="h-full w-auto rounded-xl object-contain shadow-sm" />
+        <div className="flex h-24 items-center justify-center border-b border-gray-200 dark:border-gray-800 px-6 overflow-hidden bg-white">
+          <img src="/logo.png" alt="FeiraCerta Logo" className="h-full w-auto object-contain scale-[1.8]" />
         </div>
         <nav className="mt-8 space-y-2 px-4 flex-1">
           <button 
