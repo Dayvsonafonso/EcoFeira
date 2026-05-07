@@ -13,7 +13,9 @@ import {
   History,
   LayoutDashboard,
   Filter,
-  Pencil
+  Pencil,
+  Moon,
+  Sun
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -56,6 +58,13 @@ const CATEGORIES = [
 ];
 
 export default function App() {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("theme") === "dark";
+    }
+    return false;
+  });
+
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -72,6 +81,16 @@ export default function App() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState("Todas");
   const [activeTab, setActiveTab] = useState<"dashboard" | "history" | "alerts">("dashboard");
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     fetchProducts();
@@ -210,10 +229,10 @@ export default function App() {
   }, [products]);
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans pb-24 lg:pb-0">
+    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#0F172A] text-[#111827] dark:text-gray-100 font-sans pb-24 lg:pb-0 transition-colors duration-200">
       {/* Sidebar - Desktop */}
-      <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 bg-white lg:block shadow-sm z-50">
-        <div className="flex h-20 items-center border-b border-gray-200 px-6">
+      <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] lg:flex flex-col shadow-sm z-50 transition-colors duration-200">
+        <div className="flex h-20 items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-white">
               <ShoppingBag size={24} />
@@ -221,11 +240,11 @@ export default function App() {
             <span className="text-xl font-bold">FeiraCerta</span>
           </div>
         </div>
-        <nav className="mt-8 space-y-2 px-4">
+        <nav className="mt-8 space-y-2 px-4 flex-1">
           <button 
             onClick={() => setActiveTab("dashboard")}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              activeTab === "dashboard" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
             }`}
           >
             <LayoutDashboard size={20} /> Dashboard
@@ -233,7 +252,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab("history")}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              activeTab === "history" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
             }`}
           >
             <History size={20} /> Histórico
@@ -241,12 +260,21 @@ export default function App() {
           <button 
             onClick={() => setActiveTab("alerts")}
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "alerts" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              activeTab === "alerts" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
             }`}
           >
             <AlertTriangle size={20} /> Alertas
           </button>
         </nav>
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)} 
+            className="flex w-full items-center justify-center gap-3 rounded-lg px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            <span>{isDarkMode ? "Modo Claro" : "Modo Escuro"}</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -256,35 +284,44 @@ export default function App() {
             <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold">Controle de Gastos de Feira</h1>
-                <p className="text-gray-500 text-sm">Acompanhe a variação de preços de forma inteligente.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Acompanhe a variação de preços de forma inteligente.</p>
               </div>
-              <button 
-                onClick={() => { setEditingId(null); setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" }); setShowForm(true); }}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#1D4ED8]"
-              >
-                <Plus size={20} /> Adicionar Item
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Mobile Theme Toggle */}
+                <button 
+                  onClick={() => setIsDarkMode(!isDarkMode)} 
+                  className="lg:hidden flex h-12 w-12 items-center justify-center rounded-lg bg-white dark:bg-[#1E293B] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 shadow-sm"
+                >
+                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+                <button 
+                  onClick={() => { setEditingId(null); setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" }); setShowForm(true); }}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#1D4ED8]"
+                >
+                  <Plus size={20} /> Adicionar Item
+                </button>
+              </div>
             </header>
 
             {/* Stats */}
             <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-medium text-gray-500 mb-1">Total Atual</p>
-                <p className="text-2xl font-bold">{formatCurrency(totals.current)}</p>
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Atual</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totals.current)}</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-medium text-gray-500 mb-1">Mês Anterior</p>
-                <p className="text-2xl font-bold text-gray-400">{formatCurrency(totals.prev)}</p>
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Mês Anterior</p>
+                <p className="text-2xl font-bold text-gray-400 dark:text-gray-500">{formatCurrency(totals.prev)}</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-medium text-gray-500 mb-1">Variação Real</p>
-                <p className={`text-2xl font-bold ${totals.diff > 0 ? "text-red-600" : "text-green-600"}`}>
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Variação Real</p>
+                <p className={`text-2xl font-bold ${totals.diff > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
                   {totals.diff > 0 ? "+" : ""}{formatCurrency(totals.diff)}
                 </p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <p className="text-sm font-medium text-gray-500 mb-1">Variação %</p>
-                <p className={`text-2xl font-bold ${totals.percent > 0 ? "text-red-600" : "text-green-600"}`}>
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Variação %</p>
+                <p className={`text-2xl font-bold ${totals.percent > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
                   {totals.percent.toFixed(1)}%
                 </p>
               </div>
@@ -293,11 +330,11 @@ export default function App() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xl font-bold">Lista de Compras</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lista de Compras</h2>
                   <select 
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm outline-none"
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E293B] text-gray-900 dark:text-white px-3 py-1.5 text-sm outline-none transition-colors"
                   >
                     <option value="Todas">Todas</option>
                     {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -306,57 +343,57 @@ export default function App() {
 
                 <div className="space-y-4">
                   {isLoadingProducts ? (
-                    <div className="py-20 text-center text-gray-500">Carregando itens...</div>
+                    <div className="py-20 text-center text-gray-500 dark:text-gray-400">Carregando itens...</div>
                   ) : Object.keys(groupedProducts).length === 0 ? (
-                    <div className="py-20 text-center text-gray-400 border-2 border-dashed rounded-2xl">
+                    <div className="py-20 text-center text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
                       Sua lista está vazia
                     </div>
                   ) : (
                     Object.entries(groupedProducts).map(([category, items]) => {
                       const categoryTotal = items.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
                       return (
-                        <div key={category} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                          <div className="bg-gray-50/80 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between w-full">
-                            <span className="font-bold text-blue-600 text-sm">{category}</span>
+                        <div key={category} className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] shadow-sm transition-colors">
+                          <div className="bg-gray-50/80 dark:bg-[#0F172A]/80 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between w-full">
+                            <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">{category}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Total do Setor:</span>
-                              <span className="text-sm font-black text-gray-800">{formatCurrency(categoryTotal)}</span>
+                              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tight">Total do Setor:</span>
+                              <span className="text-sm font-black text-gray-800 dark:text-gray-200">{formatCurrency(categoryTotal)}</span>
                             </div>
                           </div>
-                          <div className="divide-y divide-gray-100">
+                          <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
                           {items.map(item => {
                             const unitPrice = item.currentPrice;
                             const totalItem = unitPrice * item.quantity;
                             const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
                             return (
-                              <div key={item.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                              <div key={item.id} className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <h4 className="font-semibold text-gray-900">{item.name}</h4>
-                                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-600">
+                                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">{item.name}</h4>
+                                    <span className="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 dark:text-gray-400">
                                       x{item.quantity}
                                     </span>
                                   </div>
-                                  <p className="text-xs text-gray-500">{item.description || "Sem descrição"}</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.description || "Sem descrição"}</p>
                                 </div>
                                 <div className="flex items-center gap-3 sm:gap-6">
                                   <div className="text-right hidden sm:block">
-                                    <p className="text-[10px] text-gray-400 uppercase">Unitário</p>
-                                    <p className="text-sm text-gray-500">{formatCurrency(unitPrice)}</p>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Unitário</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(unitPrice)}</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="text-[10px] text-gray-400 uppercase">Subtotal</p>
-                                    <p className="text-sm font-bold">{formatCurrency(totalItem)}</p>
+                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Subtotal</p>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalItem)}</p>
                                   </div>
-                                  <div className={`text-right min-w-[60px] ${diff > 0 ? "text-red-600" : "text-green-600"}`}>
+                                  <div className={`text-right min-w-[60px] ${diff > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
                                     <p className="text-xs font-bold">{percent.toFixed(1)}%</p>
                                     <p className="text-[10px] font-medium">{diff > 0 ? "+" : ""}{formatCurrency(diff)}</p>
                                   </div>
-                                  <div className="flex items-center gap-2 border-l pl-3 ml-1">
-                                    <button onClick={() => handleEditClick(item)} className="text-gray-400 hover:text-blue-500 transition-colors">
+                                  <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-3 ml-1">
+                                    <button onClick={() => handleEditClick(item)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
                                       <Pencil size={18} />
                                     </button>
-                                    <button onClick={() => removeProduct(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
+                                    <button onClick={() => removeProduct(item.id)} className="text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                                       <Trash2 size={18} />
                                     </button>
                                   </div>
@@ -364,16 +401,16 @@ export default function App() {
                               </div>
                             );
                           })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="rounded-2xl bg-blue-600 p-6 text-white shadow-lg">
+                <div className="rounded-2xl bg-blue-600 dark:bg-blue-700 p-6 text-white shadow-lg transition-colors">
                   <div className="mb-4 flex items-center justify-between">
                     <Sparkles size={24} className="text-blue-200" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">AI Power</span>
@@ -385,7 +422,7 @@ export default function App() {
                   <button 
                     onClick={analyzeWithAi}
                     disabled={isLoadingAi || products.length === 0}
-                    className="w-full rounded-xl bg-white py-3 font-bold text-blue-600 hover:scale-[1.02] transition-transform disabled:opacity-50"
+                    className="w-full rounded-xl bg-white dark:bg-[#0F172A] py-3 font-bold text-blue-600 dark:text-blue-400 hover:scale-[1.02] transition-transform disabled:opacity-50"
                   >
                     {isLoadingAi ? "Analisando..." : "Gerar Insights"}
                   </button>
@@ -406,14 +443,14 @@ export default function App() {
                 </div>
 
                 {chartData.length > 0 && (
-                  <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-6 font-bold text-sm">Gastos por Categoria</h3>
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
+                    <h3 className="mb-6 font-bold text-sm text-gray-900 dark:text-white">Gastos por Categoria</h3>
                     <div className="h-48">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ bottom: 20 }}>
                           <XAxis 
                             dataKey="name" 
-                            tick={{ fontSize: 10, fill: '#6B7280' }}
+                            tick={{ fontSize: 10, fill: isDarkMode ? '#9CA3AF' : '#6B7280' }}
                             interval={0}
                             angle={-45}
                             textAnchor="end"
@@ -421,9 +458,9 @@ export default function App() {
                           <RechartsTooltip 
                             content={({ active, payload }) => {
                               if (active && payload?.length) return (
-                                <div className="bg-white p-3 shadow-xl border rounded-lg text-xs font-bold space-y-1">
-                                  <p className="text-gray-500">{payload[0].payload.name}</p>
-                                  <p className="text-blue-600 text-sm">{formatCurrency(payload[0].value as number)}</p>
+                                <div className="bg-white dark:bg-[#0F172A] p-3 shadow-xl border border-gray-100 dark:border-gray-800 rounded-lg text-xs font-bold space-y-1">
+                                  <p className="text-gray-500 dark:text-gray-400">{payload[0].payload.name}</p>
+                                  <p className="text-blue-600 dark:text-blue-400 text-sm">{formatCurrency(payload[0].value as number)}</p>
                                 </div>
                               );
                               return null;
@@ -445,12 +482,12 @@ export default function App() {
         {activeTab === "history" && (
           <section>
             <header className="mb-8">
-              <h1 className="text-2xl font-bold">Histórico Completo</h1>
-              <p className="text-gray-500 text-sm">Todos os registros ordenados por data.</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Histórico Completo</h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Todos os registros ordenados por data.</p>
             </header>
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] overflow-hidden shadow-sm overflow-x-auto transition-colors">
               <table className="w-full text-left min-w-[500px]">
-                <thead className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-bold">
+                <thead className="bg-gray-50 dark:bg-[#0F172A] border-b border-gray-200 dark:border-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 font-bold">
                   <tr>
                     <th className="px-6 py-4">Produto</th>
                     <th className="px-6 py-4 text-center">Qtd</th>
@@ -458,15 +495,15 @@ export default function App() {
                     <th className="px-6 py-4 text-right">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {products.map(item => {
                     const totalItem = item.currentPrice * item.quantity;
                     return (
                       <tr key={item.id} className="text-sm">
-                        <td className="px-6 py-4 font-medium">{item.name}</td>
-                        <td className="px-6 py-4 text-center text-gray-500 font-bold">{item.quantity}</td>
-                        <td className="px-6 py-4 text-right text-gray-400">{formatCurrency(item.previousPrice)}</td>
-                        <td className="px-6 py-4 text-right font-bold">{formatCurrency(totalItem)}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
+                        <td className="px-6 py-4 text-center text-gray-500 dark:text-gray-400 font-bold">{item.quantity}</td>
+                        <td className="px-6 py-4 text-right text-gray-400 dark:text-gray-500">{formatCurrency(item.previousPrice)}</td>
+                        <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">{formatCurrency(totalItem)}</td>
                       </tr>
                     );
                   })}
@@ -479,12 +516,12 @@ export default function App() {
         {activeTab === "alerts" && (
           <section>
             <header className="mb-8">
-              <h1 className="text-2xl font-bold">Alertas de Preço</h1>
-              <p className="text-gray-500 text-sm">Itens com maior aumento de custo.</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Alertas de Preço</h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Itens com maior aumento de custo.</p>
             </header>
             <div className="grid grid-cols-1 gap-4">
               {products.filter(p => p.currentPrice > p.previousPrice).length === 0 ? (
-                <div className="py-20 text-center text-gray-400 border-2 border-dashed rounded-2xl">
+                <div className="py-20 text-center text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
                   Nenhum aumento detectado
                 </div>
               ) : (
@@ -498,17 +535,17 @@ export default function App() {
                   .map(item => {
                     const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
                     return (
-                      <div key={item.id} className="flex items-center justify-between bg-red-50/50 border border-red-100 p-6 rounded-2xl">
+                      <div key={item.id} className="flex items-center justify-between bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-6 rounded-2xl transition-colors">
                         <div className="flex items-center gap-4">
-                          <div className="bg-red-100 p-3 rounded-full text-red-600">
+                          <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full text-red-600 dark:text-red-400">
                             <AlertTriangle size={24} />
                           </div>
                           <div>
-                            <h3 className="font-bold text-gray-900">{item.name}</h3>
-                            <p className="text-sm text-red-600 font-medium">Unitário subiu {formatCurrency(diff)}</p>
+                            <h3 className="font-bold text-gray-900 dark:text-gray-100">{item.name}</h3>
+                            <p className="text-sm text-red-600 dark:text-red-400 font-medium">Unitário subiu {formatCurrency(diff)}</p>
                           </div>
                         </div>
-                        <div className="text-2xl font-black text-red-600">+{percent.toFixed(1)}%</div>
+                        <div className="text-2xl font-black text-red-600 dark:text-red-400">+{percent.toFixed(1)}%</div>
                       </div>
                     );
                   })
@@ -519,14 +556,14 @@ export default function App() {
       </main>
 
       {/* Mobile Nav */}
-      <nav className="fixed bottom-0 left-0 flex w-full justify-around bg-white border-t border-gray-200 py-3 lg:hidden z-50 shadow-2xl">
-        <button onClick={() => setActiveTab("dashboard")} className={`flex flex-col items-center gap-1 ${activeTab === "dashboard" ? "text-blue-600" : "text-gray-400"}`}>
+      <nav className="fixed bottom-0 left-0 flex w-full justify-around bg-white dark:bg-[#1E293B] border-t border-gray-200 dark:border-gray-800 py-3 lg:hidden z-50 shadow-2xl transition-colors duration-200">
+        <button onClick={() => setActiveTab("dashboard")} className={`flex flex-col items-center gap-1 ${activeTab === "dashboard" ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
           <LayoutDashboard size={24} /> <span className="text-[10px] font-bold">Início</span>
         </button>
-        <button onClick={() => setActiveTab("history")} className={`flex flex-col items-center gap-1 ${activeTab === "history" ? "text-blue-600" : "text-gray-400"}`}>
+        <button onClick={() => setActiveTab("history")} className={`flex flex-col items-center gap-1 ${activeTab === "history" ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
           <History size={24} /> <span className="text-[10px] font-bold">Histórico</span>
         </button>
-        <button onClick={() => setActiveTab("alerts")} className={`flex flex-col items-center gap-1 ${activeTab === "alerts" ? "text-blue-600" : "text-gray-400"}`}>
+        <button onClick={() => setActiveTab("alerts")} className={`flex flex-col items-center gap-1 ${activeTab === "alerts" ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
           <AlertTriangle size={24} /> <span className="text-[10px] font-bold">Alertas</span>
         </button>
       </nav>
@@ -534,7 +571,7 @@ export default function App() {
       {/* Form Modal */}
       <AnimatePresence>
         {showForm && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -546,43 +583,43 @@ export default function App() {
               initial={{ scale: 0.95, opacity: 0 }} 
               animate={{ scale: 1, opacity: 1 }} 
               exit={{ scale: 0.95, opacity: 0 }} 
-              className="relative w-full max-w-lg bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="relative w-full max-w-lg bg-white dark:bg-[#1E293B] p-6 sm:p-8 rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto transition-colors duration-200"
             >
-              <h2 className="text-2xl font-bold mb-6">{editingId ? "Editar Item" : "Novo Item"}</h2>
+              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{editingId ? "Editar Item" : "Novo Item"}</h2>
               <form onSubmit={handleAddProduct} className="space-y-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-700 block mb-1">Nome</label>
-                  <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" />
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Nome</label>
+                  <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-bold text-gray-700 block mb-1">Preço Unitário Atual</label>
-                    <input required value={formData.currentPrice} onChange={e => setFormData({ ...formData, currentPrice: formatInputCurrency(e.target.value) })} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none" />
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Preço Unitário Atual</label>
+                    <input required value={formData.currentPrice} onChange={e => setFormData({ ...formData, currentPrice: formatInputCurrency(e.target.value) })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-700 block mb-1">Preço Unitário Anterior</label>
-                    <input value={formData.previousPrice} onChange={e => setFormData({ ...formData, previousPrice: formatInputCurrency(e.target.value) })} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none" />
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Preço Unitário Anterior</label>
+                    <input value={formData.previousPrice} onChange={e => setFormData({ ...formData, previousPrice: formatInputCurrency(e.target.value) })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-bold text-gray-700 block mb-1">Quantidade</label>
-                    <input type="number" min="1" step="any" required value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: e.target.value })} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" />
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Quantidade</label>
+                    <input type="number" min="1" step="any" required value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors" />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-700 block mb-1">Categoria</label>
-                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none">
+                    <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Categoria</label>
+                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-700 block mb-1">Observações (opcional)</label>
-                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none h-24 resize-none" placeholder="Ex: Estava mais caro no varejão" />
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block mb-1">Observações (opcional)</label>
+                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full bg-gray-50 dark:bg-[#0F172A] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none transition-colors" placeholder="Ex: Estava mais caro no varejão" />
                 </div>
                 <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl">Cancelar</button>
-                  <button type="submit" className="flex-1 py-3 font-bold text-white bg-blue-600 rounded-xl shadow-lg shadow-blue-100">
+                  <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3 font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors">Cancelar</button>
+                  <button type="submit" className="flex-1 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-100/20 dark:shadow-blue-900/20 transition-colors">
                     {editingId ? "Salvar Alterações" : "Salvar Item"}
                   </button>
                 </div>
