@@ -195,7 +195,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
       {/* Sidebar - Visual Mock for Desktop */}
-      <aside className="fixed left-0 top-0 z-50 hidden h-full w-64 border-r border-gray-200 bg-white lg:block">
+      <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 bg-white lg:block shadow-lg" style={{ zIndex: 9999 }}>
         <div className="flex h-20 items-center border-b border-gray-200 px-6">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-white">
@@ -206,31 +206,28 @@ export default function App() {
         </div>
         <nav className="mt-8 space-y-2 px-4">
           <button 
-            onClick={() => setActiveTab("dashboard")}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer",
-              activeTab === "dashboard" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
-            )}
+            onClick={() => { console.log("Tab: dashboard"); setActiveTab("dashboard"); }}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all cursor-pointer ${
+              activeTab === "dashboard" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+            }`}
           >
             <LayoutDashboard size={20} />
             Dashboard
           </button>
           <button 
-            onClick={() => setActiveTab("history")}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer",
-              activeTab === "history" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
-            )}
+            onClick={() => { console.log("Tab: history"); setActiveTab("history"); }}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all cursor-pointer ${
+              activeTab === "history" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+            }`}
           >
             <History size={20} />
             Histórico
           </button>
           <button 
-            onClick={() => setActiveTab("alerts")}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer",
-              activeTab === "alerts" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
-            )}
+            onClick={() => { console.log("Tab: alerts"); setActiveTab("alerts"); }}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all cursor-pointer ${
+              activeTab === "alerts" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+            }`}
           >
             <AlertTriangle size={20} />
             Alertas
@@ -597,33 +594,30 @@ export default function App() {
       </main>
 
       {/* Mobile Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-gray-200 bg-white px-4 py-3 lg:hidden">
+      <nav className="fixed bottom-0 left-0 flex w-full items-center justify-around border-t border-gray-200 bg-white px-4 py-3 lg:hidden shadow-2xl" style={{ zIndex: 9999 }}>
         <button 
           onClick={() => setActiveTab("dashboard")}
-          className={cn(
-            "flex flex-col items-center gap-1 transition-colors",
-            activeTab === "dashboard" ? "text-[#2563EB]" : "text-gray-400"
-          )}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === "dashboard" ? "text-blue-600" : "text-gray-400"
+          }`}
         >
           <LayoutDashboard size={24} />
           <span className="text-[10px] font-bold uppercase">Início</span>
         </button>
         <button 
           onClick={() => setActiveTab("history")}
-          className={cn(
-            "flex flex-col items-center gap-1 transition-colors",
-            activeTab === "history" ? "text-[#2563EB]" : "text-gray-400"
-          )}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === "history" ? "text-blue-600" : "text-gray-400"
+          }`}
         >
           <History size={24} />
           <span className="text-[10px] font-bold uppercase">Histórico</span>
         </button>
         <button 
           onClick={() => setActiveTab("alerts")}
-          className={cn(
-            "flex flex-col items-center gap-1 transition-colors",
-            activeTab === "alerts" ? "text-[#2563EB]" : "text-gray-400"
-          )}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === "alerts" ? "text-blue-600" : "text-gray-400"
+          }`}
         >
           <AlertTriangle size={24} />
           <span className="text-[10px] font-bold uppercase">Alertas</span>
