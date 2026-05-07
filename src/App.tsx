@@ -238,9 +238,9 @@ export default function App() {
         </nav>
       </aside>
 
-      <main className="lg:ml-64 p-6 lg:p-8">
+      <main className="lg:ml-64 p-6 lg:p-8 pb-24 lg:pb-8">
         {activeTab === "dashboard" && (
-          <div className="animate-in fade-in duration-500">
+          <section>
             {/* Header */}
             <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -502,18 +502,18 @@ export default function App() {
               </div>
             )}
             </div>
-          </div>
+          </section>
         )}
 
         {activeTab === "history" && (
-          <div className="animate-in slide-in-from-bottom-4 duration-500">
+          <section>
             <header className="mb-8">
               <h1 className="text-2xl font-bold text-[#111827]">Histórico Completo</h1>
               <p className="text-gray-500">Lista cronológica de todos os itens registrados.</p>
             </header>
             
-            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-              <table className="w-full text-left">
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm overflow-x-auto">
+              <table className="w-full text-left min-w-[600px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-4 text-sm font-semibold text-gray-700">Produto</th>
@@ -544,11 +544,11 @@ export default function App() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
         )}
 
         {activeTab === "alerts" && (
-          <div className="animate-in slide-in-from-bottom-4 duration-500">
+          <section>
             <header className="mb-8">
               <h1 className="text-2xl font-bold text-[#111827]">Alertas de Preço</h1>
               <p className="text-gray-500">Itens que sofreram as maiores altas na última feira.</p>
@@ -592,7 +592,7 @@ export default function App() {
                   })
               )}
             </div>
-          </div>
+          </section>
         )}
       </main>
 
