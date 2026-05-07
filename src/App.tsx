@@ -312,12 +312,15 @@ export default function App() {
                       Sua lista está vazia
                     </div>
                   ) : (
-                    Object.entries(groupedProducts).map(([category, items]) => (
-                      <div key={category} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 font-bold text-blue-600 text-sm">
-                          {category}
-                        </div>
-                        <div className="divide-y divide-gray-100">
+                    Object.entries(groupedProducts).map(([category, items]) => {
+                      const categoryTotal = items.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
+                      return (
+                        <div key={category} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                            <span className="font-bold text-blue-600 text-sm">{category}</span>
+                            <span className="text-sm font-black text-gray-700">Total: {formatCurrency(categoryTotal)}</span>
+                          </div>
+                          <div className="divide-y divide-gray-100">
                           {items.map(item => {
                             const unitPrice = item.currentPrice;
                             const totalItem = unitPrice * item.quantity;
