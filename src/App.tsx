@@ -102,7 +102,7 @@ export default function App() {
 
     if (error) {
       console.error("Error adding product:", error);
-      alert("Erro ao adicionar produto no banco de dados.");
+      alert(`Erro ao adicionar produto: ${error.message}`);
     } else if (data) {
       const addedProduct: Product = {
         id: data[0].id,
