@@ -50,6 +50,7 @@ export default function App() {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [filterCategory, setFilterCategory] = useState("Todas");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "history" | "alerts">("dashboard");
 
   // Fetch products from Supabase on mount
   useEffect(() => {
@@ -204,15 +205,33 @@ export default function App() {
           </div>
         </div>
         <nav className="mt-8 space-y-2 px-4">
-          <button className="flex w-full items-center gap-3 rounded-lg bg-[#DBEAFE] px-4 py-3 text-[#2563EB] font-medium transition-colors">
+          <button 
+            onClick={() => setActiveTab("dashboard")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors",
+              activeTab === "dashboard" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
+            )}
+          >
             <LayoutDashboard size={20} />
             Dashboard
           </button>
-          <button className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-gray-500 hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setActiveTab("history")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors",
+              activeTab === "history" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
+            )}
+          >
             <History size={20} />
             Histórico
           </button>
-          <button className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-gray-500 hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setActiveTab("alerts")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors",
+              activeTab === "alerts" ? "bg-[#DBEAFE] text-[#2563EB]" : "text-gray-500 hover:bg-gray-50"
+            )}
+          >
             <AlertTriangle size={20} />
             Alertas
           </button>
@@ -220,20 +239,22 @@ export default function App() {
       </aside>
 
       <main className="lg:ml-64 p-6 lg:p-8">
-        {/* Header */}
-        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#111827]">Controle de Gastos de Feira</h1>
-            <p className="text-gray-500">Acompanhe a variação de preços e economize de forma inteligente.</p>
-          </div>
-          <button 
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-[#1D4ED8] active:scale-95"
-          >
-            <Plus size={20} />
-            Adicionar Item
-          </button>
-        </header>
+        {activeTab === "dashboard" && (
+          <div className="animate-in fade-in duration-500">
+            {/* Header */}
+            <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-[#111827]">Controle de Gastos de Feira</h1>
+                <p className="text-gray-500">Acompanhe a variação de preços e economize de forma inteligente.</p>
+              </div>
+              <button 
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-[#1D4ED8] active:scale-95"
+              >
+                <Plus size={20} />
+                Adicionar Item
+              </button>
+            </header>
 
         {/* Stats Summary */}
         <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -482,6 +503,96 @@ export default function App() {
             )}
           </div>
         </div>
+
+        {activeTab === "history" && (
+          <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <header className="mb-8">
+              <h1 className="text-2xl font-bold text-[#111827]">Histórico Completo</h1>
+              <p className="text-gray-500">Lista cronológica de todos os itens registrados.</p>
+            </header>
+            
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">Produto</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">Categoria</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Anterior</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Atual</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Variação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {products.map(item => {
+                    const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
+                    return (
+                      <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-gray-900">{item.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{item.category}</td>
+                        <td className="px-6 py-4 text-sm text-gray-400 text-right line-through">{formatCurrency(item.previousPrice)}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900 text-right">{formatCurrency(item.currentPrice)}</td>
+                        <td className={cn(
+                          "px-6 py-4 text-sm font-bold text-right",
+                          diff > 0 ? "text-red-600" : diff < 0 ? "text-green-600" : "text-gray-400"
+                        )}>
+                          {diff > 0 ? "+" : ""}{percent.toFixed(1)}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "alerts" && (
+          <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <header className="mb-8">
+              <h1 className="text-2xl font-bold text-[#111827]">Alertas de Preço</h1>
+              <p className="text-gray-500">Itens que sofreram as maiores altas na última feira.</p>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6">
+              {products.filter(p => p.currentPrice > p.previousPrice).length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                  <div className="mb-4 rounded-full bg-green-50 p-4">
+                    <Sparkles size={48} className="text-green-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Nenhum aumento detectado!</h3>
+                  <p className="max-w-xs text-gray-500">Excelente! Nenhum item da sua lista ficou mais caro recentemente.</p>
+                </div>
+              ) : (
+                products
+                  .filter(p => p.currentPrice > p.previousPrice)
+                  .sort((a, b) => {
+                    const varA = calculateVariation(a.currentPrice, a.previousPrice).percent;
+                    const varB = calculateVariation(b.currentPrice, b.previousPrice).percent;
+                    return varB - varA;
+                  })
+                  .map(item => {
+                    const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
+                    return (
+                      <div key={item.id} className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50/30 p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="rounded-full bg-red-100 p-3 text-red-600">
+                            <AlertTriangle size={24} />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-gray-900">{item.name}</h3>
+                            <p className="text-sm text-gray-500">Subiu {formatCurrency(diff)} em relação à última compra</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-red-600">+{percent.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Product Form Modal */}
