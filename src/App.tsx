@@ -45,7 +45,7 @@ const CATEGORIES = [
   "🧂 Ingredientes Secos",
   "🍞 Padaria",
   "🍪 Biscoitos & Bolachas",
-  "🧃 Bebidas",
+  "🧃 Bebidas / Prontas",
   "🍬 Doces & Sobremesas",
   "🧴 Higiene Pessoal",
   "🧹 Limpeza",
