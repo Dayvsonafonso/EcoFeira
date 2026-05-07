@@ -193,7 +193,8 @@ export default function App() {
   }, [products]);
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
+    <>
+      <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
       {/* Sidebar - Visual Mock for Desktop */}
       <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 bg-white lg:block shadow-lg" style={{ zIndex: 9999 }}>
         <div className="flex h-20 items-center border-b border-gray-200 px-6">
@@ -727,6 +728,7 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 }
