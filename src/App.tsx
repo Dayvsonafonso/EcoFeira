@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { 
-  Plus, 
-  Trash2, 
-  AlertTriangle, 
-  TrendingUp, 
-  TrendingDown, 
-  Search, 
-  ChevronDown, 
+import {
+  Plus,
+  Trash2,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Search,
+  ChevronDown,
   ChevronUp,
   Sparkles,
   ShoppingBag,
@@ -15,15 +15,15 @@ import {
   Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
-  Cell 
+  Cell
 } from "recharts";
 import { Product, getSavingInsights, AiInsight } from "./lib/gemini";
 import { cn, formatCurrency, calculateVariation } from "./lib/utils";
@@ -60,7 +60,7 @@ export default function App() {
     category: "🍎 Frutas",
     currentPrice: "",
     previousPrice: "",
-    quantity: "1",
+    quantity: "",
     description: ""
   });
   const [aiInsights, setAiInsights] = useState<AiInsight | null>(null);
@@ -166,7 +166,7 @@ export default function App() {
     return { current, prev, diff, percent };
   }, [products]);
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     filterCategory === "Todas" ? true : p.category === filterCategory
   );
 
@@ -200,27 +200,24 @@ export default function App() {
           </div>
         </div>
         <nav className="mt-8 space-y-2 px-4">
-          <button 
+          <button
             onClick={() => setActiveTab("dashboard")}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
-            }`}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${activeTab === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              }`}
           >
             <LayoutDashboard size={20} /> Dashboard
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("history")}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
-            }`}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${activeTab === "history" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              }`}
           >
             <History size={20} /> Histórico
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("alerts")}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "alerts" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
-            }`}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${activeTab === "alerts" ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+              }`}
           >
             <AlertTriangle size={20} /> Alertas
           </button>
@@ -236,7 +233,7 @@ export default function App() {
                 <h1 className="text-2xl font-bold">Controle de Gastos de Feira</h1>
                 <p className="text-gray-500 text-sm">Acompanhe a variação de preços de forma inteligente.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#1D4ED8]"
               >
@@ -272,7 +269,7 @@ export default function App() {
               <div className="lg:col-span-2">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-xl font-bold">Lista de Compras</h2>
-                  <select 
+                  <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
                     className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm outline-none"
@@ -348,7 +345,7 @@ export default function App() {
                   <p className="mb-6 text-sm text-blue-100 leading-relaxed">
                     Descubra como economizar analisando as variações da sua feira.
                   </p>
-                  <button 
+                  <button
                     onClick={analyzeWithAi}
                     disabled={isLoadingAi || products.length === 0}
                     className="w-full rounded-xl bg-white py-3 font-bold text-blue-600 hover:scale-[1.02] transition-transform disabled:opacity-50"
@@ -378,7 +375,7 @@ export default function App() {
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData}>
                           <XAxis dataKey="name" hide />
-                          <RechartsTooltip 
+                          <RechartsTooltip
                             content={({ active, payload }) => {
                               if (active && payload?.length) return (
                                 <div className="bg-white p-2 shadow-xl border rounded-lg text-xs font-bold">
