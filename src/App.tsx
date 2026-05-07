@@ -240,10 +240,8 @@ export default function App() {
       {/* Sidebar - Desktop */}
       <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] lg:flex flex-col shadow-sm z-50 transition-colors duration-200">
         <div className="flex h-20 items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-white">
-              <ShoppingBag size={24} />
-            </div>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="FeiraCerta Logo" className="h-10 w-10 rounded-lg object-contain bg-white p-1" />
             <span className="text-xl font-bold">FeiraCerta</span>
           </div>
         </div>
