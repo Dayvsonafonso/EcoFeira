@@ -133,7 +133,7 @@ export default function App() {
       .select();
     if (!error && data) {
       fetchProducts();
-      setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "1", description: "" });
+      setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" });
       setShowForm(false);
     } else {
       console.error("Supabase error:", error);
