@@ -179,7 +179,7 @@ export default function App() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-white">
               <ShoppingBag size={24} />
             </div>
-            <span className="text-xl font-bold text-[#111827]">EcoFeira</span>
+            <span className="text-xl font-bold text-[#111827]">FeiraCerta</span>
           </div>
         </div>
         <nav className="mt-8 space-y-2 px-4">
