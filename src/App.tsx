@@ -82,13 +82,16 @@ export default function App() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.currentPrice || !formData.previousPrice) return;
+    if (!formData.name || !formData.currentPrice) return;
+
+    const currentPrice = parseFloat(formData.currentPrice);
+    const previousPrice = formData.previousPrice ? parseFloat(formData.previousPrice) : currentPrice;
 
     const newProduct = {
       name: formData.name,
       category: formData.category,
-      current_price: parseFloat(formData.currentPrice),
-      previous_price: parseFloat(formData.previousPrice),
+      current_price: currentPrice,
+      previous_price: previousPrice,
       description: formData.description
     };
 
@@ -512,7 +515,6 @@ export default function App() {
                     <input 
                       type="number"
                       step="0.01"
-                      required
                       placeholder="0,00"
                       value={formData.previousPrice}
                       onChange={e => setFormData({ ...formData, previousPrice: e.target.value })}
