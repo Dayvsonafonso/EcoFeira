@@ -50,7 +50,7 @@ const CATEGORIES = [
   "🫙 Enlatados & Conservas",
   "🍝 Massas & Instantâneos",
   "🫒 Óleos, Molhos & Temperos",
-  "🧂 Ingredientes Secos",
+  "🧂 Açúcar, Sal & Ingredientes Secos",
   "🍞 Padaria",
   "🍪 Biscoitos & Bolachas",
   "🧃 Bebidas / Prontas",
