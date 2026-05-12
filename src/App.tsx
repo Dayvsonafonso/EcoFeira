@@ -592,6 +592,12 @@ export default function App() {
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot className="bg-slate-50/50 dark:bg-slate-900/20 border-t-2 border-border">
+                        <tr>
+                          <td colSpan={4} className="px-8 py-6 text-right font-black uppercase tracking-widest text-slate-400 text-sm">Total do Relatório:</td>
+                          <td className="px-8 py-6 text-right font-black text-2xl text-brand-primary">{formatCurrency(filteredTotal)}</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
