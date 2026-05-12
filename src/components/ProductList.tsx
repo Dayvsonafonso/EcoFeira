@@ -1,7 +1,8 @@
 import React from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Tag, Box, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Product } from "../lib/gemini";
 import { formatCurrency, calculateVariation } from "../lib/utils";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ProductListProps {
   products: Product[];
@@ -33,81 +34,148 @@ export function ProductList({
   }, {} as Record<string, Product[]>);
 
   return (
-    <div className="lg:col-span-2">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Lista de Compras</h2>
-        <select 
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E293B] text-gray-900 dark:text-white px-3 py-1.5 text-sm outline-none transition-colors"
-        >
-          <option value="Todas">Todas</option>
-          {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
+    <div className="w-full">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+           <h2 className="text-2xl font-black tracking-tight flex items-center gap-3">
+             <Box className="text-brand-primary" size={24} />
+             Sua Lista
+           </h2>
+           <p className="text-slate-400 text-sm font-medium">Itens cadastrados no mês atual.</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-border">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-3 mr-2 hidden lg:inline">Filtro:</span>
+          <select 
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="bg-white dark:bg-slate-800 text-foreground font-bold px-4 py-2 rounded-xl text-xs outline-none shadow-sm transition-all border-none focus:ring-2 focus:ring-brand-primary/20"
+          >
+            <option value="Todas">Todas as Categorias</option>
+            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+        </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-8">
         {isLoadingProducts ? (
-          <div className="py-20 text-center text-gray-500 dark:text-gray-400">Carregando itens...</div>
-        ) : Object.keys(groupedProducts).length === 0 ? (
-          <div className="py-20 text-center text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-            Sua lista está vazia
+          <div className="flex flex-col items-center justify-center py-24 gap-4 opacity-50">
+             <div className="h-10 w-10 border-4 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin"></div>
+             <p className="font-black text-xs uppercase tracking-widest">Sincronizando dados...</p>
           </div>
+        ) : Object.keys(groupedProducts).length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-24 text-center border-2 border-dashed border-border rounded-[2.5rem] flex flex-col items-center gap-4 group"
+          >
+            <div className="h-20 w-20 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+               <Tag className="text-slate-300" size={32} />
+            </div>
+            <div>
+               <p className="text-slate-400 font-bold text-lg italic">"Tudo começa com o primeiro item."</p>
+               <p className="text-slate-300 text-xs font-black uppercase tracking-widest mt-1">Adicione um produto para começar</p>
+            </div>
+          </motion.div>
         ) : (
-          Object.entries(groupedProducts).map(([category, items]) => {
+          Object.entries(groupedProducts).map(([category, items], catIdx) => {
             const categoryTotal = items.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
             return (
-              <div key={category} className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] shadow-sm transition-colors">
-                <div className="bg-gray-50/80 dark:bg-[#0F172A]/80 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between w-full">
-                  <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">{category}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tight">Total do Setor:</span>
-                    <span className="text-sm font-black text-gray-800 dark:text-gray-200">{formatCurrency(categoryTotal)}</span>
+              <motion.div 
+                key={category} 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: catIdx * 0.1 }}
+                className="glass dark:glass rounded-[2rem] overflow-hidden border border-border shadow-sm transition-all"
+              >
+                <div className="bg-slate-50/50 dark:bg-slate-900/50 px-8 py-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-brand-primary/10 text-brand-primary p-2 rounded-xl">
+                       <Tag size={18} />
+                    </span>
+                    <span className="font-black text-foreground tracking-tight">{category}</span>
+                    <span className="bg-slate-200 dark:bg-slate-800 text-[10px] font-black px-2 py-0.5 rounded-full text-slate-500">
+                      {items.length} {items.length === 1 ? 'item' : 'itens'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 ml-auto sm:ml-0">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total do Setor</span>
+                    <span className="text-xl font-black text-brand-primary">{formatCurrency(categoryTotal)}</span>
                   </div>
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {items.map(item => {
-                  const unitPrice = item.currentPrice;
-                  const totalItem = unitPrice * item.quantity;
-                  const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
-                  return (
-                    <div key={item.id} className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{item.name}</h4>
-                          <span className="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-bold text-gray-600 dark:text-gray-400">
-                            x{item.quantity}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.description || "Sem descrição"}</p>
-                      </div>
-                      <div className="flex items-center gap-3 sm:gap-6">
-                        <div className="text-right hidden sm:block">
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Unitário</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(unitPrice)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase">Subtotal</p>
-                          <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalItem)}</p>
-                        </div>
-                        <div className={`text-right min-w-[60px] ${diff > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
-                          <p className="text-xs font-bold">{percent.toFixed(1)}%</p>
-                          <p className="text-[10px] font-medium">{diff > 0 ? "+" : ""}{formatCurrency(diff)}</p>
-                        </div>
-                        <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-3 ml-1">
-                          <button onClick={() => handleEditClick(item)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                            <Pencil size={18} />
-                          </button>
-                          <button onClick={() => removeProduct(item.id)} className="text-gray-300 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                
+                <div className="divide-y divide-border/50">
+                  <AnimatePresence mode="popLayout">
+                    {items.map(item => {
+                      const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
+                      const isUp = diff > 0;
+                      return (
+                        <motion.div 
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="flex items-center justify-between p-6 lg:p-8 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex items-center gap-3 mb-1">
+                              <h4 className="font-bold text-lg text-foreground truncate">{item.name}</h4>
+                              <span className="shrink-0 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg text-[10px] font-black text-slate-500 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors">
+                                x{item.quantity}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 truncate max-w-[200px] font-medium">
+                              {item.description || "Sem observações adicionais"}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-6 lg:gap-12 shrink-0">
+                            <div className="text-right hidden md:block">
+                              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Unitário</p>
+                              <p className="text-sm text-slate-500 font-bold">{formatCurrency(item.currentPrice)}</p>
+                            </div>
+                            
+                            <div className="text-right">
+                              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Subtotal</p>
+                              <p className="text-lg font-black text-foreground">{formatCurrency(item.currentPrice * item.quantity)}</p>
+                            </div>
+
+                            <div className={`text-right min-w-[80px] hidden sm:block ${isUp ? "text-red-500" : "text-emerald-500"}`}>
+                               <div className="flex items-center justify-end gap-1 font-black">
+                                 {isUp ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                 <span className="text-sm">{percent.toFixed(1)}%</span>
+                               </div>
+                               <p className="text-[10px] font-bold opacity-70">
+                                 {isUp ? "+" : ""}{formatCurrency(diff)}
+                               </p>
+                            </div>
+
+                            <div className="flex items-center gap-1 lg:gap-2 ml-2">
+                              <motion.button 
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleEditClick(item)} 
+                                className="p-2 text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                              >
+                                <Pencil size={18} />
+                              </motion.button>
+                              <motion.button 
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => removeProduct(item.id)} 
+                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all"
+                              >
+                                <Trash2 size={18} />
+                              </motion.button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
             );
           })
         )}

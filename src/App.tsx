@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Plus, 
   AlertTriangle, 
@@ -7,7 +7,8 @@ import {
   LayoutDashboard,
   Moon,
   Sun,
-  LogOut
+  LogOut,
+  ChevronRight
 } from "lucide-react";
 import { 
   BarChart, 
@@ -17,9 +18,12 @@ import {
   ResponsiveContainer,
   Cell 
 } from "recharts";
+import { motion, AnimatePresence } from "motion/react";
+
 import { Product } from "./lib/gemini";
-import { formatCurrency, calculateVariation } from "./lib/utils";
-import { supabase } from "./lib/supabase";
+import { formatCurrency } from "./lib/utils";
+import { useAuth } from "./hooks/useAuth";
+import { useProducts } from "./hooks/useProducts";
 
 import { DashboardStats } from "./components/DashboardStats";
 import { AiCard } from "./components/AiCard";
@@ -53,6 +57,17 @@ const CATEGORIES = [
 ];
 
 export default function App() {
+  const { session, loading: authLoading, signOut } = useAuth();
+  const { 
+    products, 
+    currentMonthProducts, 
+    isLoading: productsLoading, 
+    totals, 
+    addProduct, 
+    updateProduct, 
+    removeProduct 
+  } = useProducts(session?.user?.id);
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -60,13 +75,6 @@ export default function App() {
     return false;
   });
 
-  const [products, setProducts] = useState<Product[]>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("products_cache");
-      return cached ? JSON.parse(cached) : [];
-    }
-    return [];
-  });
   const [formData, setFormData] = useState({
     name: "",
     category: "🍎 Frutas",
@@ -75,26 +83,11 @@ export default function App() {
     quantity: "",
     description: ""
   });
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false); // Start false if we have cache
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState("Todas");
   const [activeTab, setActiveTab] = useState<"dashboard" | "history" | "alerts">("dashboard");
-  const [session, setSession] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -105,14 +98,6 @@ export default function App() {
       localStorage.setItem("theme", "light");
     }
   }, [isDarkMode]);
-
-  useEffect(() => {
-    if (session) {
-      fetchProducts();
-    } else {
-      setProducts([]);
-    }
-  }, [session]);
 
   const formatInputCurrency = (value: string) => {
     const digits = value.replace(/\D/g, "");
@@ -127,36 +112,6 @@ export default function App() {
   const parseCurrencyToNumber = (value: string) => {
     if (!value) return 0;
     return parseFloat(value.replace(/\./g, "").replace(",", "."));
-  };
-
-  const fetchProducts = async () => {
-    // Only show loading if we don't have products yet
-    if (products.length === 0) setIsLoadingProducts(true);
-    
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching products:", error);
-    } else {
-      const mapped = data.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        currentPrice: Number(p.current_price),
-        previousPrice: Number(p.previous_price),
-        quantity: Number(p.quantity || 1),
-        description: p.description,
-        createdAt: p.created_at
-      }));
-      
-      // Update state and cache
-      setProducts(mapped);
-      localStorage.setItem("products_cache", JSON.stringify(mapped));
-    }
-    setIsLoadingProducts(false);
   };
 
   const handleEditClick = (product: Product) => {
@@ -186,7 +141,7 @@ export default function App() {
     setFormData({ ...formData, name: newName, previousPrice: newPrevPrice });
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.currentPrice) return;
     const currentPrice = parseCurrencyToNumber(formData.currentPrice);
@@ -203,308 +158,289 @@ export default function App() {
       user_id: session?.user?.id
     };
 
-    let result;
+    let error;
     if (editingId) {
-      result = await supabase.from("products").update(payload).eq("id", editingId).select();
+      const res = await updateProduct(editingId, payload);
+      error = res.error;
     } else {
-      result = await supabase.from("products").insert([payload]).select();
+      const res = await addProduct(payload);
+      error = res.error;
     }
 
-    if (!result.error) {
-      fetchProducts();
+    if (!error) {
       setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" });
       setEditingId(null);
       setShowForm(false);
     } else {
-      console.error("Supabase error:", result.error);
+      console.error("Error saving product:", error);
       alert("Erro ao salvar!");
     }
   };
 
-  const removeProduct = async (id: string) => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) setProducts(products.filter(p => p.id !== id));
-  };
-
-  const currentMonthProducts = useMemo(() => {
-    const now = new Date();
-    return products.filter(p => {
-      const d = new Date(p.createdAt);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-  }, [products]);
-
-  const prevMonthProducts = useMemo(() => {
-    const now = new Date();
-    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return products.filter(p => {
-      const d = new Date(p.createdAt);
-      return d.getMonth() === prevMonthDate.getMonth() && d.getFullYear() === prevMonthDate.getFullYear();
-    });
-  }, [products]);
-
-  const totals = useMemo(() => {
-    const currentTotal = currentMonthProducts.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
-    // The previous month's actual expenditure is the sum of its items' currentPrices!
-    const prevTotal = prevMonthProducts.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
-    const diff = currentTotal - prevTotal;
-    
-    let percent = 0;
-    if (prevTotal > 0) {
-      percent = (diff / prevTotal) * 100;
-    } else if (currentTotal > 0) {
-      percent = 100;
-    }
-
-    return { current: currentTotal, prev: prevTotal, diff, percent };
-  }, [currentMonthProducts, prevMonthProducts]);
-
-  const chartData = useMemo(() => {
-    return CATEGORIES.map(cat => {
-      const current = currentMonthProducts
-        .filter(p => p.category === cat)
-        .reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
-      return { name: cat, total: current };
-    }).filter(d => d.total > 0);
-  }, [currentMonthProducts]);
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-10 w-10 border-4 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!session) {
     return <Auth />;
   }
 
+  const chartData = CATEGORIES.map(cat => {
+    const current = currentMonthProducts
+      .filter(p => p.category === cat)
+      .reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
+    return { name: cat, total: current };
+  }).filter(d => d.total > 0);
+
   return (
-    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#0F172A] text-[#111827] dark:text-gray-100 font-sans pb-24 lg:pb-0 transition-colors duration-200">
-      {/* Sidebar - Desktop */}
-      <aside className="fixed left-0 top-0 hidden h-full w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] lg:flex flex-col shadow-sm z-50 transition-colors duration-200">
-        <div className="flex h-24 items-center justify-center border-b border-gray-200 dark:border-gray-800 px-6 overflow-hidden bg-white">
-          <img src="/logo.png" alt="FeiraCerta Logo" className="h-full w-auto object-contain scale-[1.8]" />
+    <div className="min-h-screen flex bg-background text-foreground transition-colors duration-300">
+      {/* Premium Sidebar */}
+      <aside className="fixed left-0 top-0 hidden h-full w-72 border-r border-border bg-card lg:flex flex-col z-50 shadow-sm">
+        <div className="flex h-24 items-center gap-3 px-8 border-b border-border">
+          <div className="h-12 w-12 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
+            <ShoppingBag className="text-white" size={24} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">FeiraCerta</h1>
+            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400">Smart Finance</p>
+          </div>
         </div>
+
         <nav className="mt-8 space-y-2 px-4 flex-1">
-          <button 
-            onClick={() => setActiveTab("dashboard")}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "dashboard" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            }`}
-          >
-            <LayoutDashboard size={20} /> Dashboard
-          </button>
-          <button 
-            onClick={() => setActiveTab("history")}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "history" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            }`}
-          >
-            <History size={20} /> Histórico
-          </button>
-          <button 
-            onClick={() => setActiveTab("alerts")}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 font-medium transition-all ${
-              activeTab === "alerts" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            }`}
-          >
-            <AlertTriangle size={20} /> Alertas
-          </button>
+          {[
+            { id: "dashboard", icon: LayoutDashboard, label: "Painel" },
+            { id: "history", icon: History, label: "Histórico" },
+            { id: "alerts", icon: AlertTriangle, label: "Alertas" },
+          ].map((item) => (
+            <button 
+              key={item.id}
+              onClick={() => setActiveTab(item.id as any)}
+              className={`flex w-full items-center gap-4 rounded-2xl px-5 py-4 font-semibold transition-all duration-200 group ${
+                activeTab === item.id 
+                  ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25" 
+                  : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+              }`}
+            >
+              <item.icon size={20} className={activeTab === item.id ? "text-white" : "group-hover:translate-x-1 transition-transform"} />
+              {item.label}
+              {activeTab === item.id && <motion.div layoutId="activeTab" className="ml-auto"><ChevronRight size={16} /></motion.div>}
+            </button>
+          ))}
         </nav>
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-2">
+
+        <div className="p-6 border-t border-border space-y-3">
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)} 
-            className="flex w-full items-center justify-center gap-3 rounded-lg px-4 py-3 font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            className="flex w-full items-center justify-between gap-3 rounded-2xl px-5 py-3.5 font-semibold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-border hover:border-brand-primary/30 transition-all"
           >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            <span>{isDarkMode ? "Modo Claro" : "Modo Escuro"}</span>
+            <div className="flex items-center gap-3">
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              <span>{isDarkMode ? "Claro" : "Escuro"}</span>
+            </div>
+            <div className={`w-10 h-5 rounded-full relative transition-colors ${isDarkMode ? 'bg-brand-primary' : 'bg-slate-300'}`}>
+               <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${isDarkMode ? 'left-6' : 'left-1'}`}></div>
+            </div>
           </button>
           <button 
-            onClick={() => supabase.auth.signOut()} 
-            className="flex w-full items-center justify-center gap-3 rounded-lg px-4 py-3 font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            onClick={signOut} 
+            className="flex w-full items-center gap-3 rounded-2xl px-5 py-3.5 font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
           >
             <LogOut size={20} />
-            <span>Sair</span>
+            <span>Encerrar Sessão</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="lg:ml-64 p-6 lg:p-8">
-        {activeTab === "dashboard" && (
-          <section>
-            <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">Controle de Gastos de Feira</h1>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">Acompanhe a variação de preços de forma inteligente.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* Mobile Theme Toggle */}
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)} 
-                  className="lg:hidden flex h-12 w-12 items-center justify-center rounded-lg bg-white dark:bg-[#1E293B] border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300 shadow-sm"
-                >
-                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                <button 
-                  onClick={() => { setEditingId(null); setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" }); setShowForm(true); }}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#1D4ED8]"
-                >
-                  <Plus size={20} /> Adicionar Item
-                </button>
-              </div>
-            </header>
+      {/* Main Content Area */}
+      <main className="lg:ml-72 flex-1 min-h-screen p-6 lg:p-10 pb-28 lg:pb-10">
+        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-extrabold tracking-tight">
+              {activeTab === "dashboard" ? "Dashboard" : activeTab === "history" ? "Histórico" : "Alertas"}
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+              Bem-vindo, <span className="font-bold text-foreground">{session.user?.email?.split('@')[0]}</span>
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+             <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => { setEditingId(null); setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" }); setShowForm(true); }}
+              className="flex items-center justify-center gap-3 rounded-2xl bg-brand-primary px-8 py-4 font-bold text-white shadow-xl shadow-brand-primary/20 hover:bg-blue-700 transition-all"
+            >
+              <Plus size={22} strokeWidth={3} />
+              <span className="hidden sm:inline">Novo Item</span>
+            </motion.button>
+          </div>
+        </header>
 
-            {/* Dashboard Stats */}
-            <DashboardStats totals={totals} />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeTab === "dashboard" && (
+              <div className="space-y-10">
+                <DashboardStats totals={totals} />
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              {/* Product List Component */}
-              <ProductList 
-                products={currentMonthProducts}
-                categories={CATEGORIES}
-                filterCategory={filterCategory}
-                setFilterCategory={setFilterCategory}
-                isLoadingProducts={isLoadingProducts}
-                handleEditClick={handleEditClick}
-                removeProduct={removeProduct}
-              />
-
-              <div className="space-y-6">
-                {/* AI Card Component */}
-                <AiCard products={currentMonthProducts} />
-
-                {chartData.length > 0 && (
-                  <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] p-6 shadow-sm transition-colors">
-                    <h3 className="mb-6 font-bold text-sm text-gray-900 dark:text-white">Gastos por Categoria</h3>
-                    <div className="h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ bottom: 20 }}>
-                          <XAxis 
-                            dataKey="name" 
-                            tick={{ fontSize: 10, fill: isDarkMode ? '#9CA3AF' : '#6B7280' }}
-                            interval={0}
-                            angle={-45}
-                            textAnchor="end"
-                          />
-                          <RechartsTooltip 
-                            content={({ active, payload }) => {
-                              if (active && payload?.length) return (
-                                <div className="bg-white dark:bg-[#0F172A] p-3 shadow-xl border border-gray-100 dark:border-gray-800 rounded-lg text-xs font-bold space-y-1">
-                                  <p className="text-gray-500 dark:text-gray-400">{payload[0].payload.name}</p>
-                                  <p className="text-blue-600 dark:text-blue-400 text-sm">{formatCurrency(payload[0].value as number)}</p>
-                                </div>
-                              );
-                              return null;
-                            }}
-                          />
-                          <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                            {chartData.map((_, i) => <Cell key={i} fill={i % 2 === 0 ? "#2563EB" : "#3B82F6"} />)}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
+                <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+                  <div className="lg:col-span-2">
+                    <ProductList 
+                      products={currentMonthProducts}
+                      categories={CATEGORIES}
+                      filterCategory={filterCategory}
+                      setFilterCategory={setFilterCategory}
+                      isLoadingProducts={productsLoading}
+                      handleEditClick={handleEditClick}
+                      removeProduct={removeProduct}
+                    />
                   </div>
+
+                  <div className="space-y-8">
+                    <AiCard products={currentMonthProducts} />
+
+                    {chartData.length > 0 && (
+                      <div className="glass dark:glass rounded-3xl p-8 border border-border shadow-sm">
+                        <h3 className="mb-8 font-bold text-lg tracking-tight">Gastos por Categoria</h3>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData} margin={{ bottom: 20 }}>
+                              <XAxis 
+                                dataKey="name" 
+                                tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.5 }}
+                                interval={0}
+                                angle={-45}
+                                textAnchor="end"
+                              />
+                              <RechartsTooltip 
+                                cursor={{ fill: 'transparent' }}
+                                content={({ active, payload }) => {
+                                  if (active && payload?.length) return (
+                                    <div className="glass p-4 shadow-2xl border border-border rounded-2xl">
+                                      <p className="text-xs font-bold text-slate-500 mb-1">{payload[0].payload.name}</p>
+                                      <p className="text-lg font-black text-brand-primary">{formatCurrency(payload[0].value as number)}</p>
+                                    </div>
+                                  );
+                                  return null;
+                                }}
+                              />
+                              <Bar dataKey="total" radius={[8, 8, 8, 8]} barSize={24}>
+                                {chartData.map((_, i) => <Cell key={i} fill={i % 2 === 0 ? "var(--color-brand-primary)" : "var(--color-brand-secondary)"} />)}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "history" && (
+              <div className="glass dark:glass rounded-3xl overflow-hidden border border-border shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left min-w-[600px]">
+                    <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-border">
+                      <tr>
+                        <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Produto</th>
+                        <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-slate-400 text-center">Qtd</th>
+                        <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-slate-400 text-right">Unitário</th>
+                        <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-slate-400 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {products.map(item => (
+                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                          <td className="px-8 py-5 font-bold">{item.name}</td>
+                          <td className="px-8 py-5 text-center text-slate-500 font-medium">{item.quantity}</td>
+                          <td className="px-8 py-5 text-right text-slate-400">{formatCurrency(item.currentPrice)}</td>
+                          <td className="px-8 py-5 text-right font-black text-brand-primary">{formatCurrency(item.currentPrice * item.quantity)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "alerts" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.filter(p => p.currentPrice > p.previousPrice).length === 0 ? (
+                  <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-[2.5rem]">
+                    <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <AlertTriangle className="text-slate-300" size={32} />
+                    </div>
+                    <p className="text-slate-400 font-semibold text-lg">Nenhum alerta detectado</p>
+                  </div>
+                ) : (
+                  products
+                    .filter(p => p.currentPrice > p.previousPrice)
+                    .map(item => {
+                      const diff = item.currentPrice - item.previousPrice;
+                      const percent = (diff / item.previousPrice) * 100;
+                      return (
+                        <motion.div 
+                          key={item.id} 
+                          whileHover={{ y: -5 }}
+                          className="bg-red-50/30 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-8 rounded-[2rem] relative overflow-hidden"
+                        >
+                          <div className="absolute top-0 right-0 p-4 opacity-10">
+                             <AlertTriangle size={80} className="text-red-600" />
+                          </div>
+                          <h4 className="font-bold text-xl mb-1">{item.name}</h4>
+                          <p className="text-red-600 dark:text-red-400 font-bold text-sm mb-6">Subiu {formatCurrency(diff)}</p>
+                          <div className="flex items-end justify-between">
+                            <div>
+                               <p className="text-[10px] uppercase font-black text-slate-400 mb-1">Variação</p>
+                               <p className="text-3xl font-black text-red-600 dark:text-red-400">+{percent.toFixed(1)}%</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })
                 )}
               </div>
-            </div>
-          </section>
-        )}
-
-        {activeTab === "history" && (
-          <section>
-            <header className="mb-8">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Histórico Completo</h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Todos os registros ordenados por data.</p>
-            </header>
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1E293B] overflow-hidden shadow-sm overflow-x-auto transition-colors">
-              <table className="w-full text-left min-w-[500px]">
-                <thead className="bg-gray-50 dark:bg-[#0F172A] border-b border-gray-200 dark:border-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 font-bold">
-                  <tr>
-                    <th className="px-6 py-4">Produto</th>
-                    <th className="px-6 py-4 text-center">Qtd</th>
-                    <th className="px-6 py-4 text-right">Unitário</th>
-                    <th className="px-6 py-4 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {products.map(item => {
-                    const totalItem = item.currentPrice * item.quantity;
-                    return (
-                      <tr key={item.id} className="text-sm">
-                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
-                        <td className="px-6 py-4 text-center text-gray-500 dark:text-gray-400 font-bold">{item.quantity}</td>
-                        <td className="px-6 py-4 text-right text-gray-400 dark:text-gray-500">{formatCurrency(item.previousPrice)}</td>
-                        <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">{formatCurrency(totalItem)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {activeTab === "alerts" && (
-          <section>
-            <header className="mb-8">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Alertas de Preço</h1>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Itens com maior aumento de custo.</p>
-            </header>
-            <div className="grid grid-cols-1 gap-4">
-              {products.filter(p => p.currentPrice > p.previousPrice).length === 0 ? (
-                <div className="py-20 text-center text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                  Nenhum aumento detectado
-                </div>
-              ) : (
-                products
-                  .filter(p => p.currentPrice > p.previousPrice)
-                  .sort((a, b) => {
-                    const vA = calculateVariation(a.currentPrice, a.previousPrice).percent;
-                    const vB = calculateVariation(b.currentPrice, b.previousPrice).percent;
-                    return vB - vA;
-                  })
-                  .map(item => {
-                    const { diff, percent } = calculateVariation(item.currentPrice, item.previousPrice);
-                    return (
-                      <div key={item.id} className="flex items-center justify-between bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-6 rounded-2xl transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full text-red-600 dark:text-red-400">
-                            <AlertTriangle size={24} />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-gray-900 dark:text-gray-100">{item.name}</h3>
-                            <p className="text-sm text-red-600 dark:text-red-400 font-medium">Unitário subiu {formatCurrency(diff)}</p>
-                          </div>
-                        </div>
-                        <div className="text-2xl font-black text-red-600 dark:text-red-400">+{percent.toFixed(1)}%</div>
-                      </div>
-                    );
-                  })
-              )}
-            </div>
-          </section>
-        )}
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
-      {/* Mobile Nav */}
-      <nav className="fixed bottom-0 left-0 flex w-full justify-around bg-white dark:bg-[#1E293B] border-t border-gray-200 dark:border-gray-800 py-3 lg:hidden z-50 shadow-2xl transition-colors duration-200">
-        <button onClick={() => setActiveTab("dashboard")} className={`flex flex-col items-center gap-1 ${activeTab === "dashboard" ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
-          <LayoutDashboard size={24} /> <span className="text-[10px] font-bold">Início</span>
-        </button>
-        <button onClick={() => setActiveTab("history")} className={`flex flex-col items-center gap-1 ${activeTab === "history" ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
-          <History size={24} /> <span className="text-[10px] font-bold">Histórico</span>
-        </button>
-        <button onClick={() => setActiveTab("alerts")} className={`flex flex-col items-center gap-1 ${activeTab === "alerts" ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
-          <AlertTriangle size={24} /> <span className="text-[10px] font-bold">Alertas</span>
-        </button>
-        <button onClick={() => supabase.auth.signOut()} className="flex flex-col items-center gap-1 text-red-400 dark:text-red-500">
-          <LogOut size={24} /> <span className="text-[10px] font-bold">Sair</span>
-        </button>
+      {/* Mobile Premium Nav */}
+      <nav className="fixed bottom-6 left-6 right-6 flex justify-around items-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-white/5 py-4 lg:hidden z-50 rounded-[2rem] shadow-2xl">
+        {[
+          { id: "dashboard", icon: LayoutDashboard, label: "Início" },
+          { id: "history", icon: History, label: "Histórico" },
+          { id: "alerts", icon: AlertTriangle, label: "Alertas" },
+        ].map((item) => (
+          <button 
+            key={item.id}
+            onClick={() => setActiveTab(item.id as any)} 
+            className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === item.id ? "text-brand-primary scale-110" : "text-slate-400"}`}
+          >
+            <item.icon size={22} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+            <span className="text-[10px] font-bold">{item.label}</span>
+          </button>
+        ))}
       </nav>
 
-      {/* Product Modal Component */}
+      {/* Modal Integration */}
       <ProductModal 
         showForm={showForm}
         setShowForm={setShowForm}
         editingId={editingId}
         formData={formData}
         setFormData={setFormData}
-        handleAddProduct={handleAddProduct}
+        handleAddProduct={handleSaveProduct}
         handleNameChange={handleNameChange}
         categories={CATEGORIES}
         formatInputCurrency={formatInputCurrency}
