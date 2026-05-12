@@ -98,6 +98,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
 
   useEffect(() => {
     if (isDarkMode) {
@@ -212,7 +213,13 @@ export default function App() {
     
     if (!matchesSearch) return false;
 
-    if (startDate || endDate) {
+    if (selectedMonth) {
+      const pDate = new Date(p.createdAt);
+      const [year, month] = selectedMonth.split("-").map(Number);
+      if (pDate.getFullYear() !== year || (pDate.getMonth() + 1) !== month) {
+        return false;
+      }
+    } else if (startDate || endDate) {
       const pDate = new Date(p.createdAt);
       pDate.setHours(0, 0, 0, 0);
 
@@ -236,6 +243,7 @@ export default function App() {
     setSearchTerm("");
     setStartDate("");
     setEndDate("");
+    setSelectedMonth("");
   };
 
   const handlePrint = () => {
@@ -406,7 +414,7 @@ export default function App() {
             {activeTab === "history" && (
               <div className="space-y-6">
                 <div className="flex flex-col lg:flex-row gap-4 items-end justify-between no-print bg-slate-50 dark:bg-slate-900/40 p-6 rounded-[2rem] border border-border">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full lg:max-w-4xl">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full lg:max-w-5xl">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Buscar</label>
                       <div className="relative group">
@@ -424,7 +432,26 @@ export default function App() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">De</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mês Inteiro</label>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
+                          <CalendarIcon size={18} />
+                        </div>
+                        <input 
+                          type="month"
+                          value={selectedMonth}
+                          onChange={(e) => {
+                            setSelectedMonth(e.target.value);
+                            setStartDate("");
+                            setEndDate("");
+                          }}
+                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">De (Data)</label>
                       <div className="relative group">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
                           <CalendarIcon size={18} />
@@ -432,14 +459,15 @@ export default function App() {
                         <input 
                           type="date"
                           value={startDate}
+                          disabled={!!selectedMonth}
                           onChange={(e) => setStartDate(e.target.value)}
-                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none"
+                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none disabled:opacity-50"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Até</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Até (Data)</label>
                       <div className="relative group">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
                           <CalendarIcon size={18} />
@@ -447,15 +475,16 @@ export default function App() {
                         <input 
                           type="date"
                           value={endDate}
+                          disabled={!!selectedMonth}
                           onChange={(e) => setEndDate(e.target.value)}
-                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none"
+                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none disabled:opacity-50"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-2 w-full lg:w-auto">
-                    {(searchTerm || startDate || endDate) && (
+                    {(searchTerm || startDate || endDate || selectedMonth) && (
                       <motion.button 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
