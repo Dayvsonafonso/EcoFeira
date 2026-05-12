@@ -591,13 +591,12 @@ export default function App() {
                             <td className="px-8 py-5 text-right font-black text-brand-primary">{formatCurrency(item.currentPrice * item.quantity)}</td>
                           </tr>
                         ))}
-                      </tbody>
-                      <tfoot className="bg-slate-50/50 dark:bg-slate-900/20 border-t-2 border-border">
-                        <tr>
-                          <td colSpan={4} className="px-8 py-6 text-right font-black uppercase tracking-widest text-slate-400 text-sm">Total do Relatório:</td>
-                          <td className="px-8 py-6 text-right font-black text-2xl text-brand-primary">{formatCurrency(filteredTotal)}</td>
+                        {/* Total row at the end of tbody to prevent repeating on every page */}
+                        <tr className="bg-slate-50/50 dark:bg-slate-900/40 border-t-4 border-brand-primary/20">
+                          <td colSpan={4} className="px-8 py-8 text-right font-black uppercase tracking-[0.2em] text-slate-400 text-sm">Total Geral do Relatório</td>
+                          <td className="px-8 py-8 text-right font-black text-3xl text-brand-primary whitespace-nowrap">{formatCurrency(filteredTotal)}</td>
                         </tr>
-                      </tfoot>
+                      </tbody>
                     </table>
                   </div>
                 </div>
