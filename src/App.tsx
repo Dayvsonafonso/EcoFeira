@@ -56,7 +56,7 @@ const CATEGORIES = [
   "🧃 Bebidas / Prontas",
   "🍬 Doces & Sobremesas",
   "🧴 Higiene Pessoal",
-  "🧹 Limpeza",
+  "🧹 Limpeza & Químicos",
   "👶 Bebê & Infantil",
   "🐾 Pet",
   "💊 Farmácia & Saúde",
