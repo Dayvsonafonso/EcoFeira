@@ -13,7 +13,9 @@ import {
   Search,
   Printer,
   Calendar as CalendarIcon,
-  FilterX
+  FilterX,
+  Clock,
+  ArrowRight
 } from "lucide-react";
 import { 
   BarChart, 
@@ -239,6 +241,31 @@ export default function App() {
     return true;
   });
 
+  const filteredTotal = filteredHistory.reduce((sum, p) => sum + (p.currentPrice * p.quantity), 0);
+
+  const setQuickFilter = (type: 'thisMonth' | 'lastMonth' | 'last7') => {
+    const now = new Date();
+    setSearchTerm("");
+    if (type === 'thisMonth') {
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      setSelectedMonth(`${now.getFullYear()}-${month}`);
+      setStartDate("");
+      setEndDate("");
+    } else if (type === 'lastMonth') {
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const month = (lastMonthDate.getMonth() + 1).toString().padStart(2, '0');
+      setSelectedMonth(`${lastMonthDate.getFullYear()}-${month}`);
+      setStartDate("");
+      setEndDate("");
+    } else if (type === 'last7') {
+      const last7 = new Date();
+      last7.setDate(now.getDate() - 7);
+      setStartDate(last7.toISOString().split('T')[0]);
+      setEndDate(now.toISOString().split('T')[0]);
+      setSelectedMonth("");
+    }
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
     setStartDate("");
@@ -412,31 +439,74 @@ export default function App() {
             )}
 
             {activeTab === "history" && (
-              <div className="space-y-6">
-                <div className="flex flex-col lg:flex-row gap-4 items-end justify-between no-print bg-slate-50 dark:bg-slate-900/40 p-6 rounded-[2rem] border border-border">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full lg:max-w-5xl">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Buscar</label>
-                      <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
-                          <Search size={18} />
-                        </div>
-                        <input 
-                          type="text"
-                          placeholder="Produto ou categoria..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm"
-                        />
-                      </div>
+              <div className="space-y-8">
+                {/* Summary Card */}
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-brand-primary rounded-[2.5rem] p-8 text-white shadow-xl shadow-brand-primary/20 flex flex-col md:flex-row items-center justify-between gap-6"
+                >
+                  <div className="flex items-center gap-6">
+                    <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md">
+                      <Clock size={32} className="text-white" />
                     </div>
+                    <div>
+                       <h3 className="text-sm font-black uppercase tracking-[0.2em] opacity-70">Resumo do Filtro</h3>
+                       <p className="text-3xl font-black tracking-tighter">
+                         {filteredHistory.length} {filteredHistory.length === 1 ? 'Registro' : 'Registros'}
+                       </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-center md:items-end">
+                    <p className="text-sm font-black uppercase tracking-[0.2em] opacity-70 mb-1">Total do Período</p>
+                    <p className="text-5xl font-black tracking-tighter">{formatCurrency(filteredTotal)}</p>
+                  </div>
+                </motion.div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mês Inteiro</label>
-                      <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
-                          <CalendarIcon size={18} />
+                <div className="space-y-4 no-print">
+                  {/* Quick Filters */}
+                  <div className="flex flex-wrap gap-2">
+                    <button 
+                      onClick={() => setQuickFilter('thisMonth')}
+                      className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-brand-primary/10 hover:text-brand-primary transition-all border border-border"
+                    >
+                      Este Mês
+                    </button>
+                    <button 
+                      onClick={() => setQuickFilter('lastMonth')}
+                      className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-brand-primary/10 hover:text-brand-primary transition-all border border-border"
+                    >
+                      Mês Passado
+                    </button>
+                    <button 
+                      onClick={() => setQuickFilter('last7')}
+                      className="px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-500 text-xs font-black uppercase tracking-widest hover:bg-brand-primary/10 hover:text-brand-primary transition-all border border-border"
+                    >
+                      Últimos 7 dias
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col lg:flex-row gap-4 items-end justify-between bg-card p-6 rounded-[2.5rem] border border-border shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full lg:max-w-5xl">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Buscar</label>
+                        <div className="relative group">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
+                            <Search size={16} />
+                          </div>
+                          <input 
+                            type="text"
+                            placeholder="Produto..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-border text-foreground pl-11 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-bold text-xs"
+                          />
                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Mês</label>
                         <input 
                           type="month"
                           value={selectedMonth}
@@ -445,69 +515,59 @@ export default function App() {
                             setStartDate("");
                             setEndDate("");
                           }}
-                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none"
+                          className="w-full bg-slate-50 dark:bg-slate-900/50 border border-border text-foreground px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-bold text-xs appearance-none"
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">De (Data)</label>
-                      <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
-                          <CalendarIcon size={18} />
-                        </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Início</label>
                         <input 
                           type="date"
                           value={startDate}
                           disabled={!!selectedMonth}
                           onChange={(e) => setStartDate(e.target.value)}
-                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none disabled:opacity-50"
+                          className="w-full bg-slate-50 dark:bg-slate-900/50 border border-border text-foreground px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-bold text-xs appearance-none disabled:opacity-50"
                         />
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Até (Data)</label>
-                      <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
-                          <CalendarIcon size={18} />
-                        </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Fim</label>
                         <input 
                           type="date"
                           value={endDate}
                           disabled={!!selectedMonth}
                           onChange={(e) => setEndDate(e.target.value)}
-                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none disabled:opacity-50"
+                          className="w-full bg-slate-50 dark:bg-slate-900/50 border border-border text-foreground px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-bold text-xs appearance-none disabled:opacity-50"
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-2 w-full lg:w-auto">
-                    {(searchTerm || startDate || endDate || selectedMonth) && (
+                    <div className="flex gap-2 w-full lg:w-auto mt-2 lg:mt-0">
+                      {(searchTerm || startDate || endDate || selectedMonth) && (
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={clearFilters}
+                          className="p-3 text-slate-400 hover:text-red-500 bg-slate-100 dark:bg-slate-900 border border-border rounded-xl transition-all"
+                          title="Limpar Filtros"
+                        >
+                          <FilterX size={20} />
+                        </motion.button>
+                      )}
                       <motion.button 
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={clearFilters}
-                        className="p-3 text-slate-400 hover:text-red-500 bg-white dark:bg-slate-900 border border-border rounded-xl transition-all"
-                        title="Limpar Filtros"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handlePrint}
+                        className="flex-1 flex items-center justify-center gap-3 rounded-xl bg-brand-primary px-6 py-3 font-black text-white shadow-xl shadow-brand-primary/20 hover:bg-blue-700 transition-all whitespace-nowrap"
                       >
-                        <FilterX size={20} />
+                        <Printer size={18} />
+                        Imprimir
                       </motion.button>
-                    )}
-                    <motion.button 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handlePrint}
-                      className="flex-1 flex items-center justify-center gap-3 rounded-xl bg-white dark:bg-slate-900 border border-border px-6 py-3 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all whitespace-nowrap"
-                    >
-                      <Printer size={20} className="text-brand-primary" />
-                      Imprimir
-                    </motion.button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="glass dark:glass rounded-3xl overflow-hidden border border-border shadow-sm print-area">
+                <div className="glass dark:glass rounded-[2.5rem] overflow-hidden border border-border shadow-sm print-area">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left min-w-[600px]">
                       <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-border">
