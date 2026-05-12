@@ -12,7 +12,8 @@ import {
   Copy,
   Search,
   Printer,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  FilterX
 } from "lucide-react";
 import { 
   BarChart, 
@@ -95,6 +96,8 @@ export default function App() {
   const [filterCategory, setFilterCategory] = useState("Todas");
   const [activeTab, setActiveTab] = useState<"dashboard" | "history" | "alerts">("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (isDarkMode) {
@@ -203,10 +206,37 @@ export default function App() {
     return { name: cat, total: current };
   }).filter(d => d.total > 0);
 
-  const filteredHistory = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         p.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    if (startDate || endDate) {
+      const pDate = new Date(p.createdAt);
+      pDate.setHours(0, 0, 0, 0);
+
+      if (startDate) {
+        const sDate = new Date(startDate);
+        sDate.setHours(0, 0, 0, 0);
+        if (pDate < sDate) return false;
+      }
+
+      if (endDate) {
+        const eDate = new Date(endDate);
+        eDate.setHours(0, 0, 0, 0);
+        if (pDate > eDate) return false;
+      }
+    }
+
+    return true;
+  });
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStartDate("");
+    setEndDate("");
+  };
 
   const handlePrint = () => {
     window.print();
@@ -375,28 +405,77 @@ export default function App() {
 
             {activeTab === "history" && (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between no-print">
-                  <div className="relative w-full sm:max-w-md group">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
-                      <Search size={18} />
+                <div className="flex flex-col lg:flex-row gap-4 items-end justify-between no-print bg-slate-50 dark:bg-slate-900/40 p-6 rounded-[2rem] border border-border">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full lg:max-w-4xl">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Buscar</label>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
+                          <Search size={18} />
+                        </div>
+                        <input 
+                          type="text"
+                          placeholder="Produto ou categoria..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm"
+                        />
+                      </div>
                     </div>
-                    <input 
-                      type="text"
-                      placeholder="Buscar no histórico..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium"
-                    />
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">De</label>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
+                          <CalendarIcon size={18} />
+                        </div>
+                        <input 
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Até</label>
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-primary transition-colors">
+                          <CalendarIcon size={18} />
+                        </div>
+                        <input 
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="w-full bg-card border border-border text-foreground pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all font-medium text-sm appearance-none"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handlePrint}
-                    className="flex items-center justify-center gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-border px-8 py-4 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all w-full sm:w-auto"
-                  >
-                    <Printer size={20} className="text-brand-primary" />
-                    Imprimir Relatório
-                  </motion.button>
+
+                  <div className="flex gap-2 w-full lg:w-auto">
+                    {(searchTerm || startDate || endDate) && (
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={clearFilters}
+                        className="p-3 text-slate-400 hover:text-red-500 bg-white dark:bg-slate-900 border border-border rounded-xl transition-all"
+                        title="Limpar Filtros"
+                      >
+                        <FilterX size={20} />
+                      </motion.button>
+                    )}
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handlePrint}
+                      className="flex-1 flex items-center justify-center gap-3 rounded-xl bg-white dark:bg-slate-900 border border-border px-6 py-3 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all whitespace-nowrap"
+                    >
+                      <Printer size={20} className="text-brand-primary" />
+                      Imprimir
+                    </motion.button>
+                  </div>
                 </div>
 
                 <div className="glass dark:glass rounded-3xl overflow-hidden border border-border shadow-sm print-area">
