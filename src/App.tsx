@@ -8,7 +8,8 @@ import {
   Moon,
   Sun,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Copy
 } from "lucide-react";
 import { 
   BarChart, 
@@ -61,11 +62,13 @@ export default function App() {
   const { 
     products, 
     currentMonthProducts, 
+    prevMonthProducts,
     isLoading: productsLoading, 
     totals, 
     addProduct, 
     updateProduct, 
-    removeProduct 
+    removeProduct,
+    importLastMonthItems
   } = useProducts(session?.user?.id);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -268,6 +271,17 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4">
+             {activeTab === "dashboard" && currentMonthProducts.length === 0 && prevMonthProducts.length > 0 && (
+               <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={importLastMonthItems}
+                className="hidden sm:flex items-center justify-center gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-border px-6 py-4 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all"
+              >
+                <Copy size={20} className="text-brand-primary" />
+                Importar Lista Anterior
+              </motion.button>
+             )}
              <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

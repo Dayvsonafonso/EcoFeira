@@ -99,14 +99,43 @@ export function useProducts(userId: string | undefined) {
     return { current: currentTotal, prev: prevTotal, diff, percent };
   }, [currentMonthProducts, prevMonthProducts]);
 
+  const importLastMonthItems = async () => {
+    if (!userId || prevMonthProducts.length === 0) return;
+    setIsLoading(true);
+    
+    try {
+      const newItems = prevMonthProducts.map(p => ({
+        name: p.name,
+        category: p.category,
+        current_price: p.currentPrice, // Initialize with same price
+        previous_price: p.currentPrice, // Set the old price as baseline
+        quantity: p.quantity,
+        description: p.description,
+        user_id: userId
+      }));
+
+      const { error } = await supabase.from("products").insert(newItems);
+      if (error) throw error;
+      
+      await fetchProducts();
+    } catch (error) {
+      console.error("Error importing items:", error);
+      alert("Erro ao importar itens!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     products,
     currentMonthProducts,
+    prevMonthProducts,
     isLoading,
     totals,
     fetchProducts,
     addProduct,
     updateProduct,
-    removeProduct
+    removeProduct,
+    importLastMonthItems
   };
 }
