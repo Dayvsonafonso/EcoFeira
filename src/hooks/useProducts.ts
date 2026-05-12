@@ -4,8 +4,8 @@ import { Product } from "../lib/gemini";
 
 export function useProducts(userId: string | undefined) {
   const [products, setProducts] = useState<Product[]>(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("products_cache");
+    if (typeof window !== "undefined" && userId) {
+      const cached = localStorage.getItem(`products_cache_${userId}`);
       return cached ? JSON.parse(cached) : [];
     }
     return [];
@@ -19,6 +19,7 @@ export function useProducts(userId: string | undefined) {
     const { data, error } = await supabase
       .from("products")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -36,13 +37,17 @@ export function useProducts(userId: string | undefined) {
       }));
       
       setProducts(mapped);
-      localStorage.setItem("products_cache", JSON.stringify(mapped));
+      localStorage.setItem(`products_cache_${userId}`, JSON.stringify(mapped));
     }
     setIsLoading(false);
   };
 
   useEffect(() => {
     if (userId) {
+      const cached = localStorage.getItem(`products_cache_${userId}`);
+      if (cached) setProducts(JSON.parse(cached));
+      else setProducts([]);
+      
       fetchProducts();
     } else {
       setProducts([]);
@@ -50,19 +55,22 @@ export function useProducts(userId: string | undefined) {
   }, [userId]);
 
   const addProduct = async (payload: any) => {
-    const { data, error } = await supabase.from("products").insert([payload]).select();
+    if (!userId) return { error: new Error("User not authenticated") };
+    const { data, error } = await supabase.from("products").insert([{ ...payload, user_id: userId }]).select();
     if (!error) await fetchProducts();
     return { data, error };
   };
 
   const updateProduct = async (id: string, payload: any) => {
-    const { data, error } = await supabase.from("products").update(payload).eq("id", id).select();
+    if (!userId) return { error: new Error("User not authenticated") };
+    const { data, error } = await supabase.from("products").update(payload).eq("id", id).eq("user_id", userId).select();
     if (!error) await fetchProducts();
     return { data, error };
   };
 
   const removeProduct = async (id: string) => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (!userId) return { error: new Error("User not authenticated") };
+    const { error } = await supabase.from("products").delete().eq("id", id).eq("user_id", userId);
     if (!error) setProducts(products.filter(p => p.id !== id));
     return { error };
   };
