@@ -11,7 +11,6 @@ interface ProductModalProps {
   handleAddProduct: (e: React.FormEvent) => void;
   handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   categories: string[];
-  categories: string[];
   formatInputCurrency: (val: string) => string;
   isPremium?: boolean;
 }
