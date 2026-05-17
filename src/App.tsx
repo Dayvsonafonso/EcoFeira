@@ -18,7 +18,8 @@ import {
   ArrowRight,
   Crown,
   TrendingUp,
-  Info
+  Info,
+  Lock
 } from "lucide-react";
 import { 
   BarChart, 
@@ -397,16 +398,31 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4">
-             {activeTab === "dashboard" && currentMonthProducts.length === 0 && prevMonthProducts.length > 0 && profile?.subscription_status === 'active' && (
-               <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={importLastMonthItems}
-                className="hidden sm:flex items-center justify-center gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-border px-6 py-4 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all"
-              >
-                <Copy size={20} className="text-brand-primary" />
-                Importar Lista Anterior
-              </motion.button>
+             {activeTab === "dashboard" && (
+               profile?.subscription_status === 'active' ? (
+                 <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={importLastMonthItems}
+                  disabled={prevMonthProducts.length === 0}
+                  className="hidden sm:flex items-center justify-center gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-border px-6 py-4 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={prevMonthProducts.length === 0 ? "Você não tem compras no mês passado" : "Importar compras do mês passado"}
+                >
+                  <Copy size={20} className="text-brand-primary" />
+                  Importar Lista Anterior
+                </motion.button>
+               ) : (
+                 <a 
+                  href={`https://pay.cakto.com.br/3jig8io_888147?email=${encodeURIComponent(session?.user?.email || '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:flex items-center justify-center gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 px-6 py-4 font-bold text-amber-600 dark:text-amber-500 shadow-sm hover:bg-amber-500/20 transition-all"
+                  title="Recurso Premium: Importar compras do mês passado"
+                >
+                  <Lock size={18} className="text-amber-500" />
+                  Importar Lista (Premium)
+                </a>
+               )
              )}
              <motion.button 
               whileHover={{ scale: 1.02 }}
