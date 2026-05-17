@@ -397,7 +397,7 @@ export default function App() {
             </p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
              {activeTab === "dashboard" && (
                profile?.subscription_status === 'active' ? (
                  <motion.button 
@@ -405,22 +405,22 @@ export default function App() {
                   whileTap={{ scale: 0.98 }}
                   onClick={importLastMonthItems}
                   disabled={prevMonthProducts.length === 0}
-                  className="hidden sm:flex items-center justify-center gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-border px-6 py-4 font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex flex-1 sm:flex-none items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-border px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-base font-bold text-foreground shadow-sm hover:border-brand-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   title={prevMonthProducts.length === 0 ? "Você não tem compras no mês passado" : "Importar compras do mês passado"}
                 >
-                  <Copy size={20} className="text-brand-primary" />
-                  Importar Lista Anterior
+                  <Copy size={16} className="text-brand-primary sm:w-5 sm:h-5" />
+                  <span className="sm:inline">Importar Lista Anterior</span>
                 </motion.button>
                ) : (
                  <a 
                   href={`https://pay.cakto.com.br/3jig8io_888147?email=${encodeURIComponent(session?.user?.email || '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hidden sm:flex items-center justify-center gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 px-6 py-4 font-bold text-amber-600 dark:text-amber-500 shadow-sm hover:bg-amber-500/20 transition-all"
+                  className="flex flex-1 sm:flex-none items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-base font-bold text-amber-600 dark:text-amber-500 shadow-sm hover:bg-amber-500/20 transition-all"
                   title="Recurso Premium: Importar compras do mês passado"
                 >
-                  <Lock size={18} className="text-amber-500" />
-                  Importar Lista (Premium)
+                  <Lock size={16} className="text-amber-500 sm:w-[18px] sm:h-[18px]" />
+                  <span className="sm:inline">Importar Lista (Premium)</span>
                 </a>
                )
              )}
@@ -428,10 +428,10 @@ export default function App() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => { setEditingId(null); setFormData({ name: "", category: "🍎 Frutas", currentPrice: "", previousPrice: "", quantity: "", description: "" }); setShowForm(true); }}
-              className="flex items-center justify-center gap-3 rounded-2xl bg-brand-primary px-8 py-4 font-bold text-white shadow-xl shadow-brand-primary/20 hover:bg-blue-700 transition-all"
+              className="flex flex-1 sm:flex-none items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-brand-primary px-4 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-white shadow-xl shadow-brand-primary/20 hover:bg-blue-700 transition-all"
             >
-              <Plus size={22} strokeWidth={3} />
-              <span className="hidden sm:inline">Novo Item</span>
+              <Plus size={20} strokeWidth={3} className="sm:w-[22px] sm:h-[22px]" />
+              <span>Novo Item</span>
             </motion.button>
           </div>
         </header>
@@ -773,6 +773,7 @@ export default function App() {
         {[
           { id: "dashboard", icon: LayoutDashboard, label: "Início" },
           { id: "history", icon: History, label: "Histórico" },
+          ...(profile?.subscription_status !== 'active' ? [{ id: "premium", icon: Crown, label: "Premium" }] : []),
           { id: "alerts", icon: AlertTriangle, label: "Alertas" },
           { id: "logout", icon: LogOut, label: "Sair" },
         ].map((item) => (
@@ -781,12 +782,16 @@ export default function App() {
             onClick={() => {
               if (item.id === "logout") {
                 signOut();
+              } else if (item.id === "premium") {
+                window.open(`https://pay.cakto.com.br/3jig8io_888147?email=${encodeURIComponent(session?.user?.email || '')}`, "_blank");
               } else {
                 setActiveTab(item.id as any);
               }
             }} 
             className={`flex flex-col items-center gap-1.5 transition-all ${
-              item.id === "logout" 
+              item.id === "premium"
+                ? "text-amber-500 hover:text-amber-600 font-bold"
+                : item.id === "logout" 
                 ? "text-red-400 hover:text-red-500" 
                 : activeTab === item.id 
                   ? "text-brand-primary scale-110" 
