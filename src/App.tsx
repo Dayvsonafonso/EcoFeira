@@ -67,6 +67,25 @@ const CATEGORIES = [
   "📦 Outros"
 ];
 
+const PremiumLock = ({ title, description, session }: { title: string, description: string, session: any }) => (
+  <div className="py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-amber-500/30 rounded-[2.5rem] bg-amber-500/5 m-4">
+    <div className="h-20 w-20 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-orange-500/20">
+      <Crown size={32} className="text-white" />
+    </div>
+    <h3 className="text-2xl font-black text-foreground mb-2">{title}</h3>
+    <p className="text-slate-500 max-w-md mb-8">{description}</p>
+    <a 
+      href={`https://pay.cakto.com.br/3jig8io_888147?email=${encodeURIComponent(session?.user?.email || '')}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-3 rounded-2xl px-8 py-4 font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-orange-500/25 transition-all hover:scale-105 active:scale-95"
+    >
+      <Crown size={20} />
+      <span>Desbloquear Premium</span>
+    </a>
+  </div>
+);
+
 export default function App() {
   const { session, profile, loading: authLoading, signOut } = useAuth();
   const { 
@@ -378,7 +397,7 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4">
-             {activeTab === "dashboard" && currentMonthProducts.length === 0 && prevMonthProducts.length > 0 && (
+             {activeTab === "dashboard" && currentMonthProducts.length === 0 && prevMonthProducts.length > 0 && profile?.subscription_status === 'active' && (
                <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -427,7 +446,20 @@ export default function App() {
                   </div>
 
                   <div className="space-y-8">
-                    <AiCard products={currentMonthProducts} />
+                    {profile?.subscription_status === 'active' ? (
+                      <AiCard products={currentMonthProducts} />
+                    ) : (
+                      <div className="glass dark:glass rounded-[2rem] p-8 border-2 border-dashed border-amber-500/30 shadow-sm text-center bg-amber-500/5">
+                        <div className="h-16 w-16 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/20">
+                           <Crown size={24} className="text-white" />
+                        </div>
+                        <h3 className="font-black text-lg tracking-tight mb-2">Inteligência Artificial</h3>
+                        <p className="text-sm text-slate-500 mb-6 font-medium">Receba sugestões mágicas para trocar marcas e economizar na feira.</p>
+                        <a href={`https://pay.cakto.com.br/3jig8io_888147?email=${encodeURIComponent(session?.user?.email || '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-lg shadow-orange-500/20 hover:scale-105 transition-all">
+                           <Crown size={16} /> Desbloquear
+                        </a>
+                      </div>
+                    )}
 
                     {chartData.length > 0 && (
                       <div className="glass dark:glass rounded-3xl p-8 border border-border shadow-sm">
@@ -468,6 +500,13 @@ export default function App() {
             )}
 
             {activeTab === "history" && (
+              profile?.subscription_status !== 'active' ? (
+                <PremiumLock 
+                  title="Histórico Completo" 
+                  description="Veja todos os seus gastos passados, compare meses, use filtros avançados e imprima relatórios para uma gestão financeira profissional." 
+                  session={session} 
+                />
+              ) : (
               <div className="space-y-8">
                 {/* Summary Card */}
                 <motion.div 
@@ -630,9 +669,17 @@ export default function App() {
                   </div>
                 </div>
               </div>
+              )
             )}
 
             {activeTab === "alerts" && (
+              profile?.subscription_status !== 'active' ? (
+                <PremiumLock 
+                  title="Alertas de Inflação" 
+                  description="Seja avisado automaticamente quando um produto da sua lista subir de preço de um mês para o outro. Economize sabendo exatamente o que parar de comprar." 
+                  session={session} 
+                />
+              ) : (
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-2">
                    <div>
@@ -699,6 +746,7 @@ export default function App() {
                   </div>
                 )}
               </div>
+              )
             )}
           </motion.div>
         </AnimatePresence>
