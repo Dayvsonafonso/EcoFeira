@@ -225,10 +225,6 @@ export function ProductList({
               </motion.div>
             );
           })
-        )
-              </motion.div>
-            );
-          })
         )}
       </div>
     </div>
